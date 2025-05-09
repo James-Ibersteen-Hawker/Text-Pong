@@ -2,10 +2,9 @@
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-class pixel {
+class Pixel {
   x;
   y;
-  c;
   constructor(x, y, c) {
     this.x = x;
     this.y = y;
@@ -26,6 +25,14 @@ class pixel {
   get B() {}
   get BR() {}
   get BL() {}
+}
+class Coords {
+  x;
+  y;
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
