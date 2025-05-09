@@ -1,19 +1,4 @@
 "use strict";
-// window.onload = function grab() {
-//   fetch("demo.txt")
-//     .then((result) => {
-//       return result.text();
-//     })
-//     .then((data) => {
-//       data = data.split(":")[2];
-//       return fetch(data);
-//     })
-//     .then((result) => {
-//       return result.url;
-//     })
-//     .then((data) => console.log(data))
-//     .catch((error) => console.error("error"));
-// };
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -26,6 +11,21 @@ class pixel {
     this.y = y;
     this.c = c;
   }
+  get T() {
+    return {
+      x: this.x,
+      y: this.y - 1,
+    };
+  }
+  get TR() {
+    return this.y - 1;
+  }
+  get TL() {}
+  get R() {}
+  get L() {}
+  get B() {}
+  get BR() {}
+  get BL() {}
 }
 
 window.addEventListener("DOMContentLoaded", () => {
