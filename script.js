@@ -1,7 +1,4 @@
 "use strict";
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
 class Pixel {
   x;
   y;
@@ -11,20 +8,29 @@ class Pixel {
     this.c = c;
   }
   get T() {
-    return {
-      x: this.x,
-      y: this.y - 1,
-    };
+    return new Coords(this.x, thix.y - 1);
   }
   get TR() {
-    return this.y - 1;
+    return new Coords(this.x + 1, thix.y - 1);
   }
-  get TL() {}
-  get R() {}
-  get L() {}
-  get B() {}
-  get BR() {}
-  get BL() {}
+  get TL() {
+    return new Coords(this.x - 1, thix.y - 1);
+  }
+  get B() {
+    return new Coords(this.x, thix.y + 1);
+  }
+  get BR() {
+    return new Coords(this.x + 1, thix.y + 1);
+  }
+  get BL() {
+    return new Coords(this.x - 1, thix.y + 1);
+  }
+  get L() {
+    return Coords(this.x - 1, this.y);
+  }
+  get R() {
+    return Coords(this.x + 1, this.y);
+  }
 }
 class Coords {
   x;
@@ -34,18 +40,41 @@ class Coords {
     this.y = y;
   }
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  box();
-  scan(ctx);
-});
-function scan(ctx) {}
-function box() {
-  ctx.fillStyle = "red";
-  ctx.fillRect(50, 50, 400, 400);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(100, 100);
-  ctx.lineTo(250, 349);
-  ctx.stroke();
+class Item {
+  tag;
+  content;
+  img;
+  h;
+  loc;
+  constructor(tag, content, img, h, loc) {
+    (this.tag = tag),
+      (this.content = content),
+      (this.img = img),
+      (this.h = h),
+      (this.loc = loc),
+      (this.compile = undefined);
+  }
+  make() {
+    //create the structure
+  }
 }
+const DOC = {
+  e: document,
+  body: document.body,
+  get: function (arg) {
+    return this.e.querySelector(arg);
+  },
+  getALL: function (arg) {
+    return Array.from(this.e.querySelectorAll(arg));
+  },
+  create: function (tag, id = "", ...classes) {
+    let e = this.e.createElement(tag);
+    e.id = id;
+    if (classes.length > 1) e.classList.add(classes);
+    return e;
+  },
+};
+const Canvas = {
+  e: DOC.get("canvas"),
+  ctx: DOC.get("canvas").getContext("2d"),
+};
