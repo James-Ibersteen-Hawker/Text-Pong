@@ -22,29 +22,37 @@ class Game {
              |
              |--`,
       controller: "0",
+      fill: "a",
     };
   }
   testGrid() {
     let width = 10;
     let height = 10;
-    this.grid = Array.from({ length: height }, (_, i) =>
-      new Array(width).fill(" ")
+    this.grid = Array.from({ length: height }, () =>
+      new Array(width).fill(`<span>${this.glyphs.fill}</span>`)
     );
     let cont = DOC.get("#testGrid");
-    alert(this.grid);
     this.grid.forEach((e) => {
-      e.forEach((a) => cont.append("a"));
+      e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
       cont.insertAdjacentHTML("beforeend", "<br>");
     });
+    this.grid = Array.from({ length: height }, () =>
+      new Array(width).fill(this.glyphs.fill)
+    );
+    window.addEventListener("keydown", (event) => {
+      switch (event.key) {
+      }
+    });
+  }
+  move(d) {
+    switch (d) {
+    }
   }
 }
-
 const DOC = {
   get(arg) {
     return document.querySelector(arg);
   },
 };
-
 let game = new Game(2, 5, 2, false);
 game.testGrid();
-alert("here");
