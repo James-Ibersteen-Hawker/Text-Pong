@@ -34,30 +34,29 @@ class Game {
       e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
       cont.insertAdjacentHTML("beforeend", "<br>");
     });
-    //grid generated
-
     for (let i = 0; i < this.grid.length; i++) {
       this.grid[i] = new Proxy(this.grid[i], {
         get(t, p, r) {
-          alert("here");
+          console.log("got subarray", t, p, r);
           return Reflect.get(t, p, r);
         },
         set(t, p, r) {
+          console.log("set subarray", t, p, r);
           return Reflect.set(t, p, r);
         },
       });
     }
-    alert(this.grid[0][1]);
-    this.grid = new Proxy(this.grid);
-    alert("here");
-    alert(this.grid[0]);
-    // this.grid = new Proxy(this.grid, proxyController);
-    // this.grid[0];
-    // alert("here");
-  }
-  move(d) {
-    switch (d) {
-    }
+    this.grid = new Proxy(this.grid, {
+      get(t, p, r) {
+        console.log("got lobby", t, p, r);
+        return Reflect.get(t, p, r);
+      },
+      set(t, p, r) {
+        console.log("set lobby", t, p, r);
+        return Reflect.set(t, p, r);
+      },
+    });
+    this.grid[0][1] = 2;
   }
 }
 const DOC = {
