@@ -25,24 +25,35 @@ class Game {
       fill: "a",
     };
   }
-  testGrid() {
-    let width = 10;
-    let height = 10;
+  testGrid(width, height) {
+    const cont = DOC.get("#testGrid");
     this.grid = Array.from({ length: height }, () =>
-      new Array(width).fill(`<span>${this.glyphs.fill}</span>`)
+      new Array(width).fill(this.glyphs.fill)
     );
-    let cont = DOC.get("#testGrid");
     this.grid.forEach((e) => {
       e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
       cont.insertAdjacentHTML("beforeend", "<br>");
     });
-    this.grid = Array.from({ length: height }, () =>
-      new Array(width).fill(this.glyphs.fill)
-    );
-    window.addEventListener("keydown", (event) => {
-      switch (event.key) {
-      }
-    });
+    //grid generated
+
+    for (let i = 0; i < this.grid.length; i++) {
+      this.grid[i] = new Proxy(this.grid[i], {
+        get(t, p, r) {
+          alert("here");
+          return Reflect.get(t, p, r);
+        },
+        set(t, p, r) {
+          return Reflect.set(t, p, r);
+        },
+      });
+    }
+    alert(this.grid[0][1]);
+    this.grid = new Proxy(this.grid);
+    alert("here");
+    alert(this.grid[0]);
+    // this.grid = new Proxy(this.grid, proxyController);
+    // this.grid[0];
+    // alert("here");
   }
   move(d) {
     switch (d) {
@@ -55,4 +66,4 @@ const DOC = {
   },
 };
 let game = new Game(2, 5, 2, false);
-game.testGrid();
+game.testGrid(10, 10);
