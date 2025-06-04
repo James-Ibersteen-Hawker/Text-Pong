@@ -30,10 +30,7 @@ class Game {
     const self = this;
     this.grid = new Proxy(this.grid, {
       set(t, p, r) {
-        if (this.i == height - 1) {
-          alert("set");
-          self.render();
-        }
+        if (this.i == height - 1) self.render();
         this.i++;
         return Reflect.set(t, p, r);
       },
@@ -41,40 +38,17 @@ class Game {
       i: 0,
     });
     this.grid.push(
-      ...Array.from({ length: height }, () =>
-        new Array(width).fill(this.glyphs.fill)
-      )
+      ...Array.from({ length: height }, () => {
+        return new Proxy(new Array(width).fill(this.glyphs.fill), {
+          set(t, p, r) {
+            alert("set");
+            return Reflect.set(t, p, r);
+          },
+        });
+      })
     );
-    // this.grid.forEach((e) => {
-    //   e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
-    //   cont.insertAdjacentHTML("beforeend", "<br>");
-    // });
-    // for (let i = 0; i < this.grid.length; i++) {
-    //   this.grid[i] = new Proxy(this.grid[i], {
-    //     get(t, p, r) {
-    //       console.log("got subarray", t, p, r);
-    //       return Reflect.get(t, p, r);
-    //     },
-    //     set(t, p, r) {
-    //       console.log("set subarray", t, p, r);
-    //       return Reflect.set(t, p, r);
-    //     },
-    //   });
-    // }
-    // this.grid = new Proxy(this.grid, {
-    //   get(t, p, r) {
-    //     console.log("got lobby", t, p, r);
-    //     return Reflect.get(t, p, r);
-    //   },
-    //   set(t, p, r) {
-    //     console.log("set lobby", t, p, r);
-    //     return Reflect.set(t, p, r);
-    //   },
-    // });
-    // this.grid[0][1] = 2;
   }
   render() {
-    alert("here");
     const cont = DOC.get("#testGrid");
     this.grid.forEach((e) => {
       e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
