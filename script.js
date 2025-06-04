@@ -28,30 +28,27 @@ class Game {
   }
   init(width, height) {
     const self = this;
-    this.grid = new Proxy(this.grid, {
-      set(t, p, r) {
-        if (this.i == height - 1) self.render();
-        this.i++;
-        return Reflect.set(t, p, r);
-      },
-      isSet: false,
-      i: 0,
-    });
     this.grid.push(
       ...Array.from({ length: height }, () => {
         return new Proxy(new Array(width).fill(this.glyphs.fill), {
           set(t, p, r) {
-            alert("set");
-            return Reflect.set(t, p, r);
+            let reflect = Reflect.set(t, p, r);
+            self.render();
+            return reflect;
           },
         });
       })
     );
+    this.render();
+    this.grid[0][1] = "b";
   }
   render() {
     const cont = DOC.get("#testGrid");
+    cont.textContent = "";
     this.grid.forEach((e) => {
-      e.forEach((a) => cont.insertAdjacentHTML("beforeend", a));
+      e.forEach((a) => {
+        cont.insertAdjacentHTML("beforeend", a);
+      });
       cont.insertAdjacentHTML("beforeend", "<br>");
     });
   }
