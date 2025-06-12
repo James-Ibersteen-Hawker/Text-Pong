@@ -13,32 +13,33 @@ class Game {
         score1: 0,
         score2: 0,
       }),
-      this.destination = destination,
-    (this.glyphs = {
-      mid: "ǁ",
-      tbEdge: "-",
-      ball: "█",
-      sides: ":",
-      corner: "+",
-      goalL: "]",
-      goalR: "[",
-      controller: "0",
-      fill: " ",
-    }),
+      (this.destination = destination),
+      (this.glyphs = {
+        mid: "ǁ",
+        tbEdge: "-",
+        ball: "█",
+        sides: ":",
+        corner: "+",
+        goalL: "]",
+        goalR: "[",
+        controller: "0",
+        fill: " ",
+      }),
       (this.grid = []),
       (this.ref = []);
-      this.Map();
+    this.Map();
   }
   Map() {
     const self = this;
-    let w = 5, h = 6;
+    let w = 5,
+      h = 6;
     if (h % 2 == 1) h += 1;
     this.grid = Array.from({ length: h * this.res + 2 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
-          self.grid.render()
+          self.grid.render();
           return reflect;
         },
         get(t, p, r) {
@@ -61,41 +62,82 @@ class Game {
       let [k, q] = self.ref[i].split("_").map((v) => Number(v));
       return this[k][q];
     };
-    this.grid.render = function() {
+    this.grid.render = function () {
       self.destination.innerHTML = "";
-      this.forEach(e => {
-        e.forEach(a => {
+      this.forEach((e) => {
+        e.forEach((a) => {
           self.destination.append(a);
-        })
+        });
         self.destination.insertAdjacentHTML("beforeend", "<br>");
-      })
+      });
     };
     this.grid[0].fill(this.glyphs.tbEdge);
-    this.grid.at(-1).fill(this.glyphs.tbEdge)
-    this.grid.forEach(e => {
-      e.forEach((_,i) => {
-        if (i == w * self.res + 1) e.splice(i, 0,self.glyphs.mid);
-        else if (i == 0) e.splice(i,1, this.glyphs.sides);
-      })
-      e.push(self.glyphs.sides)
-    })
+    this.grid.at(-1).fill(this.glyphs.tbEdge);
+    this.grid.forEach((e) => {
+      e.forEach((_, i) => {
+        if (i == w * self.res + 1) e.splice(i, 0, self.glyphs.mid);
+        else if (i == 0) e.splice(i, 1, this.glyphs.sides);
+      });
+      e.push(self.glyphs.sides);
+    });
     this.grid[(h * self.res) / 2][0] = self.glyphs.goalL;
     this.grid[(h * self.res) / 2 + 1][0] = self.glyphs.goalL;
     this.grid[(h * self.res) / 2][this.grid[1].length - 1] = self.glyphs.goalR;
-    this.grid[(h * self.res) / 2 + 1][this.grid[1].length - 1] = self.glyphs.goalR;
-    this.base = Array.from({length: this.grid.length}, (_,i) => {
+    this.grid[(h * self.res) / 2 + 1][this.grid[1].length - 1] =
+      self.glyphs.goalR;
+    this.base = Array.from({ length: this.grid.length }, (_, i) => {
       return new Proxy([...this.grid[i].self], {
-        set(t,p,r) {
+        set(t, p, r) {
           throw new Error("Blocked modification of base");
           return;
         },
-        get(t,p,r) {
-          return Reflect.get(t,p,r);
-        }
+        get(t, p, r) {
+          return Reflect.get(t, p, r);
+        },
       });
-    })
+    });
+    class Paddle {
+      x;
+      y;
+      #side;
+      constructor(x, y, side) {
+        (this.x = x), (this.y = y), (this.d = undefined);
+        this.init();
+      }
+      init() {
+        self.grid[this.y][this.x] = self.glyphs.controller;
+      }
+      move(k) {
+        switch (k) {
+          case "w":
+            break;
+          case "a":
+            break;
+          case "s":
+            break;
+          case "d":
+            break;
+        }
+      }
+    }
+    const paddleHandler = {
+      set(t, p, r) {
+        if (!["x", "y"].includes(p)) return;
+        else {
+          self.grid[t.y][t.x] = self.glyphs.fill;
+          let reflect = Reflect.set(t, p, r);
+          self.grid[t.y][t.x] = self.glyphs.controller;
+          return reflect;
+        }
+      },
+    };
+    this.lPaddle = new Proxy(new Paddle(w, h, "l"), paddleHandler);
+    this.rPaddle = new Proxy(
+      new Paddle(self.grid[0].length - w - 1, h, "r"),
+      paddleHandler
+    );
   }
 }
 
-let game = new Game(2, 10, 5, false,document.querySelector("#testGrid"));
-game.grid.render()
+let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"));
+game.grid.render();
