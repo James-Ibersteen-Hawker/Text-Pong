@@ -24,39 +24,39 @@ class Game {
       controller: "0",
       fill: "a",
     }),
-      (this.grid = []);
+      (this.grid = []),
+      (this.ref = []);
   }
-  init(width, height) {
+  Map(loc) {
     const self = this;
-    this.grid.push(
-      ...Array.from({ length: height }, () => {
-        return new Proxy(new Array(width).fill(this.glyphs.fill), {
-          set(t, p, r) {
-            let reflect = Reflect.set(t, p, r);
-            self.render();
-            return reflect;
-          },
-        });
-      })
-    );
-    this.render();
-    this.grid[0][1] = "b";
-  }
-  render() {
-    const cont = DOC.get("#testGrid");
-    cont.textContent = "";
-    this.grid.forEach((e) => {
-      e.forEach((a) => {
-        cont.insertAdjacentHTML("beforeend", a);
+    this.grid = Array.from({ length: 6 * this.res }, () => {
+      let arr = new Array(5 * this.res * 2).fill(this.glyphs.fill);
+      return new Proxy(arr, {
+        set(t, p, r) {
+          return Reflect.set(t, p, r);
+        },
+        get(t, p, r) {
+          if (p == "self") return this.target;
+          return Reflect.get(t, p, r);
+        },
+        target: arr,
       });
-      cont.insertAdjacentHTML("beforeend", "<br>");
     });
+    this.ref = Array.from({ length: this.grid.length }, (_, i) => {
+      return [...this.grid[i].self].map(() => "b");
+    });
+    for (let i = 0; i < this.ref.length; i++) {
+      for (let q = 0; q < this.ref[i].length; q++) {
+        this.ref[i][q] = `${i}_${q}`;
+      }
+    }
+    this.ref = this.ref.flat();
+    this.grid.lookUp = function (i) {
+      let [k, q] = self.ref[i].split("_").map((v) => Number(v));
+      return this[k][q];
+    };
   }
 }
-const DOC = {
-  get(arg) {
-    return document.querySelector(arg);
-  },
-};
-let game = new Game(2, 5, 2, false);
-game.init(10, 10);
+
+let game = new Game(1, 10, 5, false);
+game.Map();
