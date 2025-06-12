@@ -33,8 +33,9 @@ class Game {
     const self = this;
     let w = 5,
       h = 6;
-    if (h % 2 == 1) h += 1;
-    this.grid = Array.from({ length: h * this.res + 2 }, () => {
+    if (h % 2 == 0) h += 1;
+    h = Math.max(h, 5);
+    this.grid = Array.from({ length: h * this.res + 3 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
         set(t, p, r) {
@@ -80,16 +81,17 @@ class Game {
       });
       e.push(self.glyphs.sides);
     });
-    this.grid[(h * self.res) / 2][0] = self.glyphs.goalL;
-    this.grid[(h * self.res) / 2 + 1][0] = self.glyphs.goalL;
-    this.grid[(h * self.res) / 2][this.grid[1].length - 1] = self.glyphs.goalR;
-    this.grid[(h * self.res) / 2 + 1][this.grid[1].length - 1] =
-      self.glyphs.goalR;
+    const tempIndex = (h * self.res) / 2;
+    this.grid[tempIndex][0] = self.glyphs.goalL;
+    this.grid[tempIndex + 1][0] = self.glyphs.goalL;
+    this.grid[tempIndex + 2][0] = self.glyphs.goalL;
+    this.grid[tempIndex][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.grid[tempIndex + 1][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.grid[tempIndex + 2][this.grid[1].length - 1] = self.glyphs.goalR;
     this.base = Array.from({ length: this.grid.length }, (_, i) => {
       return new Proxy([...this.grid[i].self], {
         set(t, p, r) {
           throw new Error("Blocked modification of base");
-          return;
         },
         get(t, p, r) {
           return Reflect.get(t, p, r);
@@ -99,42 +101,117 @@ class Game {
     class Paddle {
       x;
       y;
-      #side;
+      side;
       constructor(x, y, side) {
-        (this.x = x), (this.y = y), (this.d = undefined);
+        (this.x = x), (this.y = y), (this.side = side), (this.d = undefined);
         this.init();
       }
       init() {
         self.grid[this.y][this.x] = self.glyphs.controller;
+        this.sides = new Array(self.grid.length)
+          .fill()
+          .map(() => new Array(self.grid[0].length).fill(false));
+        this.sides.forEach((e, q, pArr) => {
+          e.forEach((a, i, arr) => {
+            if (q > 0 && q < pArr.length - 1) {
+              if (i > 0 && i < arr.length - 1) {
+                switch (this.side) {
+                  case "r":
+                    if (i > w * self.res + 1) arr.splice(i, 1, true);
+                    break;
+                  case "l":
+                    if (i < w * self.res - 1) arr.splice(i, 1, true);
+                    break;
+                }
+              }
+            }
+          });
+        });
+        this.sides = this.sides.map((e) => {
+          return new Proxy(e, {
+            set(t, p, r) {
+              throw new Error("Cannot change sides array");
+            },
+          });
+        });
       }
       move(k) {
         switch (k) {
-          case "w":
+          case 1:
+            this.x += 1;
             break;
-          case "a":
+          case -1:
+            this.x -= 1;
             break;
-          case "s":
+          case 2:
+            this.y += 1;
             break;
-          case "d":
+          case -2:
+            this.y -= 1;
             break;
         }
       }
     }
     const paddleHandler = {
-      set(t, p, r) {
+      set(t, p, v) {
         if (!["x", "y"].includes(p)) return;
         else {
-          self.grid[t.y][t.x] = self.glyphs.fill;
-          let reflect = Reflect.set(t, p, r);
-          self.grid[t.y][t.x] = self.glyphs.controller;
-          return reflect;
+          const [oX, oY] = [t.x, t.y];
+          self.grid[oY][oX] = self.base[oY][oX];
+          let reflect = Reflect.set(t, p, v);
+          if (t.sides[t.y][t.x] == true) {
+            self.grid[t.y][t.x] = self.glyphs.controller;
+            return reflect;
+          } else {
+            self.grid[oY][oX] = self.glyphs.controller;
+            p == "x" ? (v = oX) : (v = oY);
+            return Reflect.set(t, p, v);
+          }
         }
       },
     };
-    this.lPaddle = new Proxy(new Paddle(w, h, "l"), paddleHandler);
+    this.lPaddle = new Proxy(new Paddle(w, h + 1, "l"), paddleHandler);
     this.rPaddle = new Proxy(
-      new Paddle(self.grid[0].length - w - 1, h, "r"),
+      new Paddle(self.grid[0].length - w - 1, h + 1, "r"),
       paddleHandler
+    );
+    self.key = false;
+    window.addEventListener(
+      "keydown",
+      (event) => {
+        console.log(self.key);
+        if (self.key == false) {
+          self.key = true;
+          switch (event.key) {
+            case "w":
+              self.lPaddle.move(-2);
+              break;
+            case "s":
+              self.lPaddle.move(2);
+              break;
+            case "a":
+              self.lPaddle.move(-1);
+              break;
+            case "d":
+              self.lPaddle.move(1);
+              break;
+            case "ArrowUp":
+              self.rPaddle.move(-2);
+              break;
+            case "ArrowDown":
+              self.rPaddle.move(2);
+              break;
+            case "ArrowLeft":
+              self.rPaddle.move(-1);
+              break;
+            case "ArrowRight":
+              self.rPaddle.move(1);
+              break;
+          }
+          self.key = false;
+        } else return;
+      },
+      true
     );
   }
 }
