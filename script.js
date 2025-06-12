@@ -20,11 +20,10 @@ class Game {
       ball: "█",
       sides: ":",
       corner: "+",
-      goal: `|--
-             |
-             |--`,
+      goalL: "]",
+      goalR: "[",
       controller: "0",
-      fill: "a",
+      fill: " ",
     }),
       (this.grid = []),
       (this.ref = []);
@@ -32,7 +31,8 @@ class Game {
   }
   Map() {
     const self = this;
-    const w = 5, h = 6;
+    let w = 5, h = 6;
+    if (h % 2 == 1) h += 1;
     this.grid = Array.from({ length: h * this.res + 2 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
@@ -70,15 +70,29 @@ class Game {
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       })
     };
-    //
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge)
     this.grid.forEach(e => {
-      e.forEach((a,i, arr) => {
+      e.forEach((_,i) => {
         if (i == w * self.res + 1) e.splice(i, 0,self.glyphs.mid);
         else if (i == 0) e.splice(i,1, this.glyphs.sides);
       })
       e.push(self.glyphs.sides)
+    })
+    this.grid[(h * self.res) / 2][0] = self.glyphs.goalL;
+    this.grid[(h * self.res) / 2 + 1][0] = self.glyphs.goalL;
+    this.grid[(h * self.res) / 2][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.grid[(h * self.res) / 2 + 1][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.base = Array.from({length: this.grid.length}, (_,i) => {
+      return new Proxy([...this.grid[i].self], {
+        set(t,p,r) {
+          throw new Error("Blocked modification of base");
+          return;
+        },
+        get(t,p,r) {
+          return Reflect.get(t,p,r);
+        }
+      });
     })
   }
 }
