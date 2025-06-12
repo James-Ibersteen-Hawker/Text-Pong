@@ -55,8 +55,17 @@ class Game {
       let [k, q] = self.ref[i].split("_").map((v) => Number(v));
       return this[k][q];
     };
+    this.grid.render = function(loc) {
+      this.forEach(e => {
+        e.forEach(a => {
+          loc.append(a);
+        })
+        loc.insertAdjacentHTML("beforeend", "<br>");
+      })
+    }
   }
 }
 
 let game = new Game(1, 10, 5, false);
 game.Map();
+game.grid.render(document.body)
