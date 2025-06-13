@@ -103,7 +103,11 @@ class Game {
       y;
       side;
       constructor(x, y, side) {
-        (this.x = x), (this.y = y), (this.side = side), (this.d = undefined);
+        (this.x = x),
+          (this.y = y),
+          (this.side = side),
+          (this.d = undefined),
+          (this.moveBy = 3);
         this.init();
       }
       init() {
@@ -120,7 +124,7 @@ class Game {
                     if (i > w * self.res + 1) arr.splice(i, 1, true);
                     break;
                   case "l":
-                    if (i < w * self.res - 1) arr.splice(i, 1, true);
+                    if (i < w * self.res + 1) arr.splice(i, 1, true);
                     break;
                 }
               }
@@ -138,16 +142,16 @@ class Game {
       move(k) {
         switch (k) {
           case 1:
-            this.x += 1;
+            this.x += this.moveBy;
             break;
           case -1:
-            this.x -= 1;
+            this.x -= this.moveBy;
             break;
           case 2:
-            this.y += 1;
+            this.y += this.moveBy;
             break;
           case -2:
-            this.y -= 1;
+            this.y -= this.moveBy;
             break;
         }
       }
@@ -159,12 +163,33 @@ class Game {
           const [oX, oY] = [t.x, t.y];
           self.grid[oY][oX] = self.base[oY][oX];
           let reflect = Reflect.set(t, p, v);
-          if (t.sides[t.y][t.x] == true) {
-            self.grid[t.y][t.x] = self.glyphs.controller;
-            return reflect;
+          if (
+            t.y > 0 &&
+            t.x > 0 &&
+            t.y < self.grid.length &&
+            t.x < self.grid[0].length
+          ) {
+            if (t.sides[t.y][t.x] == true) {
+              self.grid[t.y][t.x] = self.glyphs.controller;
+              return reflect;
+            } else {
+              let [nX, nY] = [t.x, t.y];
+              while (t.sides[nY][nX] != true) {
+                if (t.x > oX) nX -= 1;
+                else if (t.x < oX) nX += 1;
+                if (t.y > oY) nY -= 1;
+                else if (t.y < oY) nY += 1;
+              }
+              self.grid[nY][nX] = self.glyphs.controller;
+              p == "x" ? (v = nX) : (v = nY);
+              return Reflect.set(t, p, v);
+            }
           } else {
-            self.grid[oY][oX] = self.glyphs.controller;
-            p == "x" ? (v = oX) : (v = oY);
+            let [nX, nY] = [t.x, t.y];
+            nX = Math.max(1, Math.min(nX, self.grid[0].length - 2));
+            nY = Math.max(1, Math.min(nY, self.grid.length - 2));
+            self.grid[nY][nX] = self.glyphs.controller;
+            p == "x" ? (v = nX) : (v = nY);
             return Reflect.set(t, p, v);
           }
         }
@@ -175,44 +200,50 @@ class Game {
       new Paddle(self.grid[0].length - w - 1, h + 1, "r"),
       paddleHandler
     );
-    self.key = false;
-    window.addEventListener(
-      "keydown",
-      (event) => {
-        console.log(self.key);
-        if (self.key == false) {
-          self.key = true;
-          switch (event.key) {
-            case "w":
-              self.lPaddle.move(-2);
-              break;
-            case "s":
-              self.lPaddle.move(2);
-              break;
-            case "a":
-              self.lPaddle.move(-1);
-              break;
-            case "d":
-              self.lPaddle.move(1);
-              break;
-            case "ArrowUp":
-              self.rPaddle.move(-2);
-              break;
-            case "ArrowDown":
-              self.rPaddle.move(2);
-              break;
-            case "ArrowLeft":
-              self.rPaddle.move(-1);
-              break;
-            case "ArrowRight":
-              self.rPaddle.move(1);
-              break;
-          }
-          self.key = false;
-        } else return;
-      },
-      true
-    );
+    let flag = false;
+    let mult = 1;
+    let moveInterval;
+    let keys = [];
+    window.addEventListener("keydown", (event) => {
+      if (!keys.includes(event.key)) {
+        keys.push(event.key);
+        if (moveInterval) clearInterval(moveInterval);
+        moveInterval = setInterval(() => {
+          keys.forEach((k) => {
+            switch (k) {
+              case "w":
+                self.lPaddle.move(-2);
+                break;
+              case "s":
+                self.lPaddle.move(2);
+                break;
+              case "a":
+                self.lPaddle.move(-1);
+                break;
+              case "d":
+                self.lPaddle.move(1);
+                break;
+              case "ArrowUp":
+                self.rPaddle.move(-2);
+                break;
+              case "ArrowDown":
+                self.rPaddle.move(2);
+                break;
+              case "ArrowLeft":
+                self.rPaddle.move(-1);
+                break;
+              case "ArrowRight":
+                self.rPaddle.move(1);
+                break;
+            }
+          });
+        }, 80);
+      } else return;
+    });
+    window.addEventListener("keyup", (event) => {
+      keys.splice(keys.indexOf(event.key), 1);
+      if (keys.length == 0) clearInterval(moveInterval);
+    });
   }
 }
 
