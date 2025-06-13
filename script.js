@@ -75,6 +75,15 @@ class Game {
       }
       init() {
         self.grid[this.y][this.x] = self.glyphs.ball;
+        this.map = new Array(self.grid.length)
+          .fill()
+          .map(() => new Array(self.grid[0].length).fill(false));
+        self.grid.forEach((e, q) => {
+          e.forEach((a, i) => {
+            if ([self.glyphs.fill, self.glyphs.mid].includes(a))
+              this.map[q][i] = true;
+          });
+        });
       }
       updateV() {
         if (this.moveLoop) clearInterval(this.moveLoop);
@@ -112,21 +121,35 @@ class Game {
         }, self.speed);
       }
       bounce(d) {
-        if ([1, 2].includes(d)) {
-          if (Math.abs(this.v) == Math.abs(d)) puck.v = -puck.v;
-        } else if (d == 3) puck.v = 4;
-        else if (d == 4) puck.v = 3;
+        if ([1, -1, 2, -2].includes(d)) {
+          if (d == this.v) puck.v = -puck.v;
+        } else {
+          switch (d) {
+            case 3:
+              puck.v = -3;
+              break;
+            case -3:
+              puck.v = 3;
+              break;
+            case 4:
+              puck.v = -4;
+              break;
+            case -4:
+              puck.v = 4;
+              break;
+          }
+        }
       }
       check() {
         const cells = [
-          [self.grid[this.y][this.x - 1], 1],
+          [self.grid[this.y][this.x - 1], -1],
           [self.grid[this.y][this.x + 1], 1],
-          [self.grid[this.y - 1][this.x], 2],
+          [self.grid[this.y - 1][this.x], -2],
           [self.grid[this.y + 1][this.x], 2],
           [self.grid[this.y - 1][this.x - 1], 3],
+          [self.grid[this.y + 1][this.x + 1], -3],
           [self.grid[this.y - 1][this.x + 1], 4],
-          [self.grid[this.y + 1][this.x - 1], 3],
-          [self.grid[this.y + 1][this.x + 1], 4],
+          [self.grid[this.y + 1][this.x - 1], -4],
         ];
         cells.forEach((e) => {
           if (![self.glyphs.fill, self.glyphs.mid].includes(e[0]))
