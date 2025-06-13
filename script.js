@@ -77,7 +77,6 @@ class Game {
         self.grid[this.y][this.x] = self.glyphs.ball;
       }
       updateV() {
-        console.log(this.x, this.y);
         if (this.moveLoop) clearInterval(this.moveLoop);
         this.moveLoop = setInterval(() => {
           switch (this.v) {
@@ -114,10 +113,9 @@ class Game {
       }
       bounce(d) {
         if ([1, 2].includes(d)) {
-          if (Math.abs(this.v) == Math.abs(d)) console.log("in direc");
-        } else if ([3, 4].includes(d)) {
-          //invert direction lookup, when I get to it....eventually
-        }
+          if (Math.abs(this.v) == Math.abs(d)) puck.v = -puck.v;
+        } else if (d == 3) puck.v = 4;
+        else if (d == 4) puck.v = 3;
       }
       check() {
         const cells = [
