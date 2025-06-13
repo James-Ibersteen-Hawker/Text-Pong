@@ -1,10 +1,12 @@
+"use strict";
 class Game {
   res;
   maxScore;
   roundCount;
   bot;
   destination;
-  constructor(res, maxScore, roundCount, bot, destination) {
+  speed;
+  constructor(res, maxScore, roundCount, bot, destination, speed) {
     (this.res = res),
       (this.maxScore = maxScore),
       (this.roundCount = roundCount),
@@ -13,6 +15,7 @@ class Game {
         score1: 0,
         score2: 0,
       }),
+      (this.speed = speed),
       (this.destination = destination),
       (this.glyphs = {
         mid: "ǁ",
@@ -41,7 +44,6 @@ class Game {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
           self.grid.render();
-
           return reflect;
         },
         get(t, p, r) {
@@ -69,42 +71,87 @@ class Game {
       y;
       v;
       constructor(x, y, v) {
-        (this.x = x), (this.y = y), (this.v = v);
+        (this.x = x), (this.y = y), (this.v = v), (this.moveLoop = undefined);
       }
       init() {
         self.grid[this.y][this.x] = self.glyphs.ball;
       }
-      updatePos() {}
-      bounce() {}
+      updateV() {
+        if (this.moveLoop) clearInterval(this.moveLoop);
+        this.moveLoop = setInterval(() => {
+          switch (this.v) {
+            case 1:
+              this.x += 1;
+              break;
+            case -1:
+              this.x -= 1;
+              break;
+            case 2:
+              this.y += 1;
+              break;
+            case -2:
+              this.y -= 1;
+              break;
+            case 3:
+              this.x -= 1;
+              this.y -= 1;
+              break;
+            case -3:
+              this.x += 1;
+              this.y += 1;
+              break;
+            case 4:
+              this.x += 1;
+              this.y -= 1;
+              break;
+            case -4:
+              this.x -= 1;
+              this.y += 1;
+              break;
+          }
+        }, self.speed);
+      }
+      bounce(d) {
+        if ([1, 2].includes(d)) {
+          if (Math.abs(this.v) == Math.abs(d)) console.log("in direc");
+        } else if ([3, 4].includes(d)) {
+          //invert direction lookup, when I get to it....eventually
+        }
+      }
       check() {
-        alert(`${this.x}_${this.y}`);
         const cells = [
-          self.grid[this.y][this.x - 1],
-          self.grid[this.y][this.x + 1],
-          self.grid[this.y - 1][this.x],
-          self.grid[this.y + 1][this.x],
-          self.grid[this.y - 1][this.x - 1],
-          self.grid[this.y - 1][this.x + 1],
-          self.grid[this.y + 1][this.x - 1],
-          self.grid[this.y + 1][this.x + 1],
+          [self.grid[this.y][this.x - 1], 1],
+          [self.grid[this.y][this.x + 1], 1],
+          [self.grid[this.y - 1][this.x], 2],
+          [self.grid[this.y + 1][this.x], 2],
+          [self.grid[this.y - 1][this.x - 1], 3],
+          [self.grid[this.y - 1][this.x + 1], 4],
+          [self.grid[this.y + 1][this.x - 1], 3],
+          [self.grid[this.y + 1][this.x + 1], 4],
         ];
         cells.forEach((e) => {
-          if (![self.glyphs.fill, self.glyphs.mid].includes(e)) {
-            alert("has something");
-          }
+          if (![self.glyphs.fill, self.glyphs.mid].includes(e[0]))
+            this.bounce(e[1]);
         });
       }
     }
-    const puck = new Puck(w * this.res + 1, h + 1, 0);
+    const puck = new Proxy(new Puck(w * this.res + 1, h + 1, 0), {
+      set(t, p, v) {
+        let reflect = Reflect.set(t, p, v);
+        if (p == "v") {
+          t.updateV();
+        }
+        return reflect;
+      },
+    });
     this.grid.render = function () {
+      console.log("rendered");
       self.destination.innerHTML = "";
       this.forEach((e) => {
-        e.forEach((a) => {
-          self.destination.append(a);
-        });
+        e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
-      // puck.check();
+      puck.check();
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -188,10 +235,28 @@ class Game {
             this.y -= this.moveBy;
             break;
         }
+        this.d = k;
+        this.puck();
+      }
+      puck() {
+        const cells = [
+          [self.grid[this.y][this.x - 1], -1],
+          [self.grid[this.y][this.x + 1], 1],
+          [self.grid[this.y - 1][this.x], -2],
+          [self.grid[this.y + 1][this.x], 2],
+          [self.grid[this.y - 1][this.x - 1], 3],
+          [self.grid[this.y - 1][this.x + 1], 4],
+          [self.grid[this.y + 1][this.x - 1], -3],
+          [self.grid[this.y + 1][this.x + 1], -4],
+        ];
+        cells.forEach((e) => {
+          if (e[0] == self.glyphs.ball) puck.v = e[1];
+        });
       }
     }
     const paddleHandler = {
       set(t, p, v) {
+        if (p == "d") return Reflect.set(t, p, v);
         if (!["x", "y"].includes(p)) return;
         else {
           const [oX, oY] = [t.x, t.y];
@@ -239,7 +304,6 @@ class Game {
     let moveInterval;
     let keys = [];
     puck.init();
-    puck.check();
     window.addEventListener("keydown", (event) => {
       if (!keys.includes(event.key)) {
         keys.push(event.key);
@@ -283,5 +347,5 @@ class Game {
   }
 }
 
-let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"));
+let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"), 80);
 game.grid.render();
