@@ -41,6 +41,7 @@ class Game {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
           self.grid.render();
+
           return reflect;
         },
         get(t, p, r) {
@@ -63,6 +64,38 @@ class Game {
       let [k, q] = self.ref[i].split("_").map((v) => Number(v));
       return this[k][q];
     };
+    class Puck {
+      x;
+      y;
+      v;
+      constructor(x, y, v) {
+        (this.x = x), (this.y = y), (this.v = v);
+      }
+      init() {
+        self.grid[this.y][this.x] = self.glyphs.ball;
+      }
+      updatePos() {}
+      bounce() {}
+      check() {
+        alert(`${this.x}_${this.y}`);
+        const cells = [
+          self.grid[this.y][this.x - 1],
+          self.grid[this.y][this.x + 1],
+          self.grid[this.y - 1][this.x],
+          self.grid[this.y + 1][this.x],
+          self.grid[this.y - 1][this.x - 1],
+          self.grid[this.y - 1][this.x + 1],
+          self.grid[this.y + 1][this.x - 1],
+          self.grid[this.y + 1][this.x + 1],
+        ];
+        cells.forEach((e) => {
+          if (![self.glyphs.fill, self.glyphs.mid].includes(e)) {
+            alert("has something");
+          }
+        });
+      }
+    }
+    const puck = new Puck(w * this.res + 1, h + 1, 0);
     this.grid.render = function () {
       self.destination.innerHTML = "";
       this.forEach((e) => {
@@ -71,6 +104,7 @@ class Game {
         });
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
+      // puck.check();
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -107,7 +141,7 @@ class Game {
           (this.y = y),
           (this.side = side),
           (this.d = undefined),
-          (this.moveBy = 3);
+          (this.moveBy = 1);
         this.init();
       }
       init() {
@@ -204,6 +238,8 @@ class Game {
     let mult = 1;
     let moveInterval;
     let keys = [];
+    puck.init();
+    puck.check();
     window.addEventListener("keydown", (event) => {
       if (!keys.includes(event.key)) {
         keys.push(event.key);
