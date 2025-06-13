@@ -77,36 +77,37 @@ class Game {
         self.grid[this.y][this.x] = self.glyphs.ball;
       }
       updateV() {
+        console.log(this.x, this.y);
         if (this.moveLoop) clearInterval(this.moveLoop);
         this.moveLoop = setInterval(() => {
           switch (this.v) {
             case 1:
-              this.x += 1;
+              puck.x += 1;
               break;
             case -1:
-              this.x -= 1;
+              puck.x -= 1;
               break;
             case 2:
-              this.y += 1;
+              puck.y += 1;
               break;
             case -2:
-              this.y -= 1;
+              puck.y -= 1;
               break;
             case 3:
-              this.x -= 1;
-              this.y -= 1;
+              puck.x -= 1;
+              puck.y -= 1;
               break;
             case -3:
-              this.x += 1;
-              this.y += 1;
+              puck.x += 1;
+              puck.y += 1;
               break;
             case 4:
-              this.x += 1;
-              this.y -= 1;
+              puck.x += 1;
+              puck.y -= 1;
               break;
             case -4:
-              this.x -= 1;
-              this.y += 1;
+              puck.x -= 1;
+              puck.y += 1;
               break;
           }
         }, self.speed);
@@ -137,15 +138,17 @@ class Game {
     }
     const puck = new Proxy(new Puck(w * this.res + 1, h + 1, 0), {
       set(t, p, v) {
+        const [oX, oY] = [t.x, t.y];
         let reflect = Reflect.set(t, p, v);
-        if (p == "v") {
-          t.updateV();
+        if (p == "v") t.updateV();
+        if (["x", "y"].includes(p)) {
+          self.grid[oY][oX] = self.base[oY][oX];
+          self.grid[t.y][t.x] = self.glyphs.ball;
         }
         return reflect;
       },
     });
     this.grid.render = function () {
-      console.log("rendered");
       self.destination.innerHTML = "";
       this.forEach((e) => {
         e.forEach((a) => self.destination.append(a));
@@ -244,10 +247,10 @@ class Game {
           [self.grid[this.y][this.x + 1], 1],
           [self.grid[this.y - 1][this.x], -2],
           [self.grid[this.y + 1][this.x], 2],
-          [self.grid[this.y - 1][this.x - 1], 3],
-          [self.grid[this.y - 1][this.x + 1], 4],
-          [self.grid[this.y + 1][this.x - 1], -3],
-          [self.grid[this.y + 1][this.x + 1], -4],
+          [self.grid[this.y - 1][this.x - 1], -3],
+          [self.grid[this.y - 1][this.x + 1], -4],
+          [self.grid[this.y + 1][this.x - 1], 3],
+          [self.grid[this.y + 1][this.x + 1], 4],
         ];
         cells.forEach((e) => {
           if (e[0] == self.glyphs.ball) puck.v = e[1];
@@ -299,8 +302,6 @@ class Game {
       new Paddle(self.grid[0].length - w - 1, h + 1, "r"),
       paddleHandler
     );
-    let flag = false;
-    let mult = 1;
     let moveInterval;
     let keys = [];
     puck.init();
@@ -337,7 +338,7 @@ class Game {
                 break;
             }
           });
-        }, 80);
+        }, self.speed);
       } else return;
     });
     window.addEventListener("keyup", (event) => {
