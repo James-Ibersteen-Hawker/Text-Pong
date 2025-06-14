@@ -169,7 +169,9 @@ class Game {
         const coords = Object.values(this.bitTable);
         coords.forEach((c) => {
           const [tX, tY] = c;
-          if (x + tX == puck.x && y + tY == puck.y) puck.v = c;
+          if (x + tX == puck.x && y + tY == puck.y) {
+            if (tX == this.v[0] && tY == this.v[1]) puck.v = c;
+          }
         });
       }
     }
@@ -197,6 +199,7 @@ class Game {
         this.moveLoop = setInterval(() => {
           puck.x += this.v[0];
           puck.y += this.v[1];
+          this.check();
         }, self.speed);
       }
       bounce(d) {
