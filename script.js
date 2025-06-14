@@ -87,15 +87,15 @@ class Game {
         e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
-      if (puckInit) {
-        if (
-          (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y) ||
-          (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y)
-        ) {
-          puck.x += puck.v[0];
-          puck.y += puck.v[1];
-        }
-      }
+      // if (puckInit) {
+      //   if (
+      //     (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y) ||
+      //     (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y)
+      //   ) {
+      //     puck.x += puck.v[0];
+      //     puck.y += puck.v[1];
+      //   }
+      // }
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -180,8 +180,12 @@ class Game {
       move(c) {
         let m = bitTable[c];
         m == undefined ? (m = [0, 0]) : m;
-        this.x += m[0];
-        this.y += m[1];
+        const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
+        console.log(hasPuck);
+        if (!hasPuck) {
+          this.x += m[0];
+          this.y += m[1];
+        }
         this.v = [...m];
         this.hitPuck();
       }
@@ -362,6 +366,6 @@ let game = new Game(
   false,
   document.querySelector("#testGrid"),
   80,
-  false
+  true
 );
 game.grid.render();
