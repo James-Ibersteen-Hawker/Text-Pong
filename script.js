@@ -301,56 +301,52 @@ class Game {
 
     //eventlisteners
     let moveInterval;
-
-    const keysBase = new Proxy([], {
-      set(t, p, v) {
-        if (p != "length" && !(p in t)) alert(`missing ${p}`);
-        let reflect = Reflect.set(t, p, v);
-        keysDynam.push(v);
-        return reflect;
-      },
-      get(t, p, v) {
-        const o = Reflect.get(t, p, v);
-        if (p === "splice") {
-          return function (...args) {
-            const result = o.apply(t, args);
-            return result;
-          };
-        }
-        return Reflect.get(t, p, v);
-      },
-    });
-    const keysDynam = [];
     const wasd = Object.fromEntries(
-      ["w", "a", "s", "d"].map((e) => [e, self.lPaddle])
+      ["w", "a", "s", "d"].map((v, i) => [v, Math.pow(2, i)])
     );
-    const arrow = Object.fromEntries(
-      ["Up", "Down", "Left", "Right"].map((e) => [`Arrow${e}`, self.rPaddle])
+    const arrows = Object.fromEntries(
+      ["Up", "Left", "Down", "Right"].map((v, i) => [
+        `Arrow${v}`,
+        Math.pow(2, i),
+      ])
     );
-    const paddleLookup = { ...wasd, ...arrow };
-    for (let key in paddleLookup) {
-      let t = paddleLookup[key];
-      if (["w", "ArrowUp"].includes(key)) paddleLookup[key] = [t, [0, 1]];
-      if (["a", "ArrowLeft"].includes(key)) paddleLookup[key] = [t, [-1, 0]];
-      if (["s", "ArrowDown"].includes(key)) paddleLookup[key] = [t, [0, -1]];
-      if (["d", "ArrowRight"].includes(key)) paddleLookup[key] = [t, [1, 0]];
-    }
+    const bitLookUp = { ...wasd, ...arrows };
+    const keySet = [
+      "w",
+      "a",
+      "s",
+      "d",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowRight",
+      "ArrowLeft",
+    ];
+    const keys = [];
     window.addEventListener("keydown", (event) => {
-      if (keysBase.includes(event.key)) return;
-      keysBase.push(event.key);
+      if (!keySet.includes(event.key));
+      if (keys.includes(event.key)) return;
+      keys.push(event.key);
       if (moveInterval) clearInterval(moveInterval);
       moveInterval = setInterval(() => {
-        keysDynam.forEach((k) =>
-          paddleLookup[k][0].move(...paddleLookup[k][1])
-        );
+        const set1 = keys.filter((v) => v.includes("Arrow"));
+        const set2 = keys.filter((v) => !v.includes("Arrow"));
+        let control1 = 0;
+        let control2 = 0;
+        set1.forEach((e) => (control1 = control1 | bitLookUp[e]));
+        set2.forEach((e) => (control2 = control2 | bitLookUp[e]));
+        self.lPaddle.move(control1);
+        self.rPaddle.move(control2);
       }, self.speed);
     });
     window.addEventListener("keyup", (event) => {
-      keysBase.splice(keysBase.indexOf(event.key), 1);
-      if (keysBase.length == 0) clearInterval(moveInterval);
+      let i = keys.indexOf(event.key);
+      if (i != -1) keys.splice(i, 1);
+      if (keys.length == 0) {
+        clearInterval(moveInterval);
+        moveInterval = undefined;
+      }
     });
   }
 }
-
 let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"), 80);
 game.grid.render();
