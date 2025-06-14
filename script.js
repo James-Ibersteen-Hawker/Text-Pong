@@ -198,6 +198,16 @@ class Game {
       updateV() {
         if (this.moveLoop) clearInterval(this.moveLoop);
         this.moveLoop = setInterval(() => {
+          if (puckFlag == true) {
+            const set1 = keys.filter((v) => !v.includes("Arrow"));
+            const set2 = keys.filter((v) => v.includes("Arrow"));
+            let control1 = 0;
+            let control2 = 0;
+            set1.forEach((e) => (control1 = control1 | bitLookUp[e]));
+            set2.forEach((e) => (control2 = control2 | bitLookUp[e]));
+            self.lPaddle.move(control1);
+            self.rPaddle.move(control2);
+          }
           puck.x += this.v[0];
           puck.y += this.v[1];
           this.check();
@@ -206,9 +216,9 @@ class Game {
       bounce(d, bool) {
         if (bool == false) puck.v = [-this.v[0], -this.v[1]];
         else if (bool == true) {
+          puck.v = [-this.v[0], -this.v[1]];
           puck.x += -d[0];
           puck.y += -d[1];
-          puck.v = [-this.v[0], -this.v[1]];
         }
       }
       check() {
@@ -271,7 +281,7 @@ class Game {
     this.lPaddle = new Proxy(new Paddle(w, h + 1, "l"), paddleHandler);
     let tempHalf = self.grid[0].length - w - 1;
     this.rPaddle = new Proxy(new Paddle(tempHalf, h + 1, "r"), paddleHandler);
-    const puck = new Proxy(new Puck(w * this.res + 1, h + 1, 0), {
+    const puck = new Proxy(new Puck(w * this.res + 1, h + 1, [0, 0]), {
       set(t, p, v) {
         const [oX, oY] = [t.x, t.y];
         let reflect = Reflect.set(t, p, v);
@@ -285,7 +295,6 @@ class Game {
     });
     puck.init();
     //eventlisteners
-    let moveInterval;
     const wasd = Object.fromEntries(
       ["w", "a", "s", "d"].map((v, i) => [v, Math.pow(2, i)])
     );
@@ -307,30 +316,19 @@ class Game {
       "ArrowLeft",
     ];
     const keys = [];
+    let puckFlag = false;
     window.addEventListener("keydown", (event) => {
       if (!keySet.includes(event.key)) return;
       if (keys.includes(event.key)) return;
       keys.push(event.key);
-      if (moveInterval) clearInterval(moveInterval);
-      moveInterval = setInterval(() => {
-        const set1 = keys.filter((v) => !v.includes("Arrow"));
-        const set2 = keys.filter((v) => v.includes("Arrow"));
-        let control1 = 0;
-        let control2 = 0;
-        set1.forEach((e) => (control1 = control1 | bitLookUp[e]));
-        set2.forEach((e) => (control2 = control2 | bitLookUp[e]));
-        self.lPaddle.move(control1);
-        self.rPaddle.move(control2);
-      }, self.speed);
+      puckFlag = true;
     });
     window.addEventListener("keyup", (event) => {
       let i = keys.indexOf(event.key);
       if (i != -1) keys.splice(i, 1);
-      if (keys.length == 0) {
-        clearInterval(moveInterval);
-        moveInterval = undefined;
-      }
+      if (keys.length == 0) puckFlag = false;
     });
+    puck.updateV();
   }
 }
 let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"), 80);
