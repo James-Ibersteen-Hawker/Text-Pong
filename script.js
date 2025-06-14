@@ -113,7 +113,18 @@ class Game {
           (this.side = side),
           (this.d = undefined),
           (this.moveBy = 1),
-          (this.v = [0, 0]);
+          (this.v = [0, 0]),
+          (this.bitTable = {
+            0: [0, 0],
+            1: [0, -1],
+            2: [-1, 0],
+            4: [0, 1],
+            8: [1, 0],
+            3: [-1, -1],
+            6: [-1, 1],
+            9: [1, -1],
+            12: [1, 1],
+          });
         this.init();
       }
       init() {
@@ -145,9 +156,21 @@ class Game {
           });
         });
       }
-      move(x, y) {
-        this.x += x;
-        this.y += -y;
+      move(c) {
+        let m = this.bitTable[c];
+        m == undefined ? (m = [0, 0]) : m;
+        this.x += m[0];
+        this.y += m[1];
+        this.v = [...m];
+        this.hitPuck();
+      }
+      hitPuck() {
+        const [x, y] = [this.x, this.y];
+        const coords = Object.values(this.bitTable);
+        coords.forEach((c) => {
+          const [tX, tY] = c;
+          if (x + tX == puck.x && y + tY == puck.y) puck.v = c;
+        });
       }
     }
     class Puck {
@@ -172,36 +195,8 @@ class Game {
       updateV() {
         if (this.moveLoop) clearInterval(this.moveLoop);
         this.moveLoop = setInterval(() => {
-          switch (this.v) {
-            case 1:
-              puck.x += 1;
-              break;
-            case -1:
-              puck.x -= 1;
-              break;
-            case 2:
-              puck.y += 1;
-              break;
-            case -2:
-              puck.y -= 1;
-              break;
-            case 3:
-              puck.x -= 1;
-              puck.y -= 1;
-              break;
-            case -3:
-              puck.x += 1;
-              puck.y += 1;
-              break;
-            case 4:
-              puck.x += 1;
-              puck.y -= 1;
-              break;
-            case -4:
-              puck.x -= 1;
-              puck.y += 1;
-              break;
-          }
+          puck.x += this.v[0];
+          puck.y += this.v[1];
         }, self.speed);
       }
       bounce(d) {
@@ -245,7 +240,7 @@ class Game {
     const paddleHandler = {
       set(t, p, v) {
         if (p == "d") return Reflect.set(t, p, v);
-        if (!["x", "y"].includes(p)) return;
+        if (!["x", "y"].includes(p)) return Reflect.set(t, p, v);
         else {
           const [oX, oY] = [t.x, t.y];
           self.grid[oY][oX] = self.base[oY][oX];
@@ -323,13 +318,13 @@ class Game {
     ];
     const keys = [];
     window.addEventListener("keydown", (event) => {
-      if (!keySet.includes(event.key));
+      if (!keySet.includes(event.key)) return;
       if (keys.includes(event.key)) return;
       keys.push(event.key);
       if (moveInterval) clearInterval(moveInterval);
       moveInterval = setInterval(() => {
-        const set1 = keys.filter((v) => v.includes("Arrow"));
-        const set2 = keys.filter((v) => !v.includes("Arrow"));
+        const set1 = keys.filter((v) => !v.includes("Arrow"));
+        const set2 = keys.filter((v) => v.includes("Arrow"));
         let control1 = 0;
         let control2 = 0;
         set1.forEach((e) => (control1 = control1 | bitLookUp[e]));
