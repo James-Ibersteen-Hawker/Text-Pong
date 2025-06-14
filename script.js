@@ -194,8 +194,6 @@ class Game {
               this.map[q][i] = true;
           });
         });
-      }
-      updateV() {
         if (this.moveLoop) clearInterval(this.moveLoop);
         this.moveLoop = setInterval(() => {
           if (puckFlag == true) {
@@ -216,9 +214,10 @@ class Game {
       bounce(d, bool) {
         if (bool == false) puck.v = [-this.v[0], -this.v[1]];
         else if (bool == true) {
-          puck.v = [-this.v[0], -this.v[1]];
+          alert(true);
           puck.x += -d[0];
           puck.y += -d[1];
+          puck.v = [-this.v[0], -this.v[1]];
         }
       }
       check() {
@@ -285,7 +284,6 @@ class Game {
       set(t, p, v) {
         const [oX, oY] = [t.x, t.y];
         let reflect = Reflect.set(t, p, v);
-        if (p == "v") t.updateV();
         if (["x", "y"].includes(p)) {
           self.grid[oY][oX] = self.base[oY][oX];
           self.grid[t.y][t.x] = self.glyphs.ball;
@@ -328,7 +326,6 @@ class Game {
       if (i != -1) keys.splice(i, 1);
       if (keys.length == 0) puckFlag = false;
     });
-    puck.updateV();
   }
 }
 let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"), 80);
