@@ -87,15 +87,6 @@ class Game {
         e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
-      // if (puckInit) {
-      //   if (
-      //     (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y) ||
-      //     (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y)
-      //   ) {
-      //     puck.x += puck.v[0];
-      //     puck.y += puck.v[1];
-      //   }
-      // }
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -245,11 +236,21 @@ class Game {
         puckInit = true;
       }
       bounce(d, bool) {
-        if (bool == false) puck.v = [-this.v[0], -this.v[1]];
-        else if (bool == true) {
-          console.log("in puck");
-          puck.v = [-this.v[0], -this.v[1]];
+        if (d == [0, 0]) alert("0 error");
+        const [dX, dY] = d;
+        const [vX, vY] = puck.v;
+        //right left
+        if (dX != 0 && dY == 0) puck.v = [-vX, 0];
+        //up down
+        else if (dX == 0 && dY != 0) puck.v = [0, -vY];
+        //horiz diag
+        else {
+          const beyond =
+            self.grid[this.y + dY + 1 * (dY / Math.abs(dY))][
+              this.x + dX + 1 * (dX / Math.abs(dX))
+            ];
         }
+        //vert diag
       }
       check() {
         let set = new Array(2).fill(null).map(() => [0, 0]);
