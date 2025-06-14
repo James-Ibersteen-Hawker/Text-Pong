@@ -33,18 +33,21 @@ class Game {
     this.Map();
   }
   Map() {
+    let tick = false;
+    const globalTick = setInterval(() => {
+      tick = !tick;
+    }, this.speed);
     const self = this;
     let w = 5;
     let h = 6;
     if (h % 2 == 0) h += 1;
     h = Math.max(h, 5);
-    let puckInit = false;
     this.grid = Array.from({ length: h * this.res + 3 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
-          self.grid.render(puckInit);
+          self.grid.render();
           return reflect;
         },
         get(t, p, r) {
@@ -67,13 +70,12 @@ class Game {
       let [k, q] = self.ref[i].split("_").map((v) => Number(v));
       return this[k][q];
     };
-    this.grid.render = function (arg = false) {
+    this.grid.render = function () {
       self.destination.innerHTML = "";
       this.forEach((e) => {
         e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
-      if (arg) alert("here");
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -101,7 +103,17 @@ class Game {
         },
       });
     });
-
+    const bitTable = {
+      0: [0, 0],
+      1: [0, -1],
+      2: [-1, 0],
+      4: [0, 1],
+      8: [1, 0],
+      3: [-1, -1],
+      6: [-1, 1],
+      9: [1, -1],
+      12: [1, 1],
+    };
     //control classes
     class Paddle {
       x;
@@ -114,18 +126,7 @@ class Game {
           (this.d = undefined),
           (this.moveBy = 1),
           (this.v = [0, 0]),
-          (this.bitTable = {
-            0: [0, 0],
-            1: [0, -1],
-            2: [-1, 0],
-            4: [0, 1],
-            8: [1, 0],
-            3: [-1, -1],
-            6: [-1, 1],
-            9: [1, -1],
-            12: [1, 1],
-          });
-        this.init();
+          this.init();
       }
       init() {
         self.grid[this.y][this.x] = self.glyphs.controller;
@@ -157,7 +158,7 @@ class Game {
         });
       }
       move(c) {
-        let m = this.bitTable[c];
+        let m = bitTable[c];
         m == undefined ? (m = [0, 0]) : m;
         this.x += m[0];
         this.y += m[1];
@@ -166,7 +167,7 @@ class Game {
       }
       hitPuck() {
         const [x, y] = [this.x, this.y];
-        const coords = Object.values(this.bitTable);
+        const coords = Object.values(bitTable);
         coords.forEach((c) => {
           const [tX, tY] = c;
           if (x + tX == puck.x && y + tY == puck.y) {
@@ -202,40 +203,27 @@ class Game {
           this.check();
         }, self.speed);
       }
-      bounce(d) {
-        if ([1, -1, 2, -2].includes(d)) {
-          if (d == this.v) puck.v = -puck.v;
-        } else {
-          switch (d) {
-            case 3:
-              puck.v = -3;
-              break;
-            case -3:
-              puck.v = 3;
-              break;
-            case 4:
-              puck.v = -4;
-              break;
-            case -4:
-              puck.v = 4;
-              break;
-          }
+      bounce(d, bool) {
+        if (bool == false) puck.v = [-this.v[0], -this.v[1]];
+        else if (bool == true) {
+          puck.x += -d[0];
+          puck.y += -d[1];
+          puck.v = [-this.v[0], -this.v[1]];
         }
       }
       check() {
-        const cells = [
-          [self.grid[this.y][this.x - 1], -1],
-          [self.grid[this.y][this.x + 1], 1],
-          [self.grid[this.y - 1][this.x], -2],
-          [self.grid[this.y + 1][this.x], 2],
-          [self.grid[this.y - 1][this.x - 1], 3],
-          [self.grid[this.y + 1][this.x + 1], -3],
-          [self.grid[this.y - 1][this.x + 1], 4],
-          [self.grid[this.y + 1][this.x - 1], -4],
-        ];
-        cells.forEach((e) => {
-          if (![self.glyphs.fill, self.glyphs.mid].includes(e[0]))
-            this.bounce(e[1]);
+        let set = new Array(2).fill(null).map(() => [0, 0]);
+        const [x, y] = [this.x, this.y];
+        set[0][0] = this.v[0];
+        set[1][1] = this.v[1];
+        set = set.filter((v) => [Math.abs(v[0]), Math.abs(v[1])].includes(1));
+        set.forEach((s) => {
+          const t = self.grid[y + s[1]][x + s[0]];
+          const wall = ![self.glyphs.fill, self.glyphs.mid].includes(t);
+          const onPuckL = x == self.lPaddle.x && y == self.lPaddle.y;
+          const onPuckR = x == self.rPaddle.x && y == self.rPaddle.y;
+          if (wall && !onPuckL && !onPuckR) this.bounce(s, false);
+          else if (onPuckL || onPuckR) this.bounce(s, true);
         });
       }
     }
@@ -296,7 +284,6 @@ class Game {
       },
     });
     puck.init();
-
     //eventlisteners
     let moveInterval;
     const wasd = Object.fromEntries(
