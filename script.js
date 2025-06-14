@@ -34,8 +34,8 @@ class Game {
   }
   Map() {
     const self = this;
-    let w = 5,
-      h = 6;
+    let w = 5;
+    let h = 6;
     if (h % 2 == 0) h += 1;
     h = Math.max(h, 5);
     let puckInit = false;
@@ -84,13 +84,13 @@ class Game {
       });
       e.push(self.glyphs.sides);
     });
-    const tempIndex = (h * self.res) / 2;
-    this.grid[tempIndex][0] = self.glyphs.goalL;
-    this.grid[tempIndex + 1][0] = self.glyphs.goalL;
-    this.grid[tempIndex + 2][0] = self.glyphs.goalL;
-    this.grid[tempIndex][this.grid[1].length - 1] = self.glyphs.goalR;
-    this.grid[tempIndex + 1][this.grid[1].length - 1] = self.glyphs.goalR;
-    this.grid[tempIndex + 2][this.grid[1].length - 1] = self.glyphs.goalR;
+    const tI = (h * self.res) / 2;
+    this.grid[tI][0] = self.glyphs.goalL;
+    this.grid[tI + 1][0] = self.glyphs.goalL;
+    this.grid[tI + 2][0] = self.glyphs.goalL;
+    this.grid[tI][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.grid[tI + 1][this.grid[1].length - 1] = self.glyphs.goalR;
+    this.grid[tI + 2][this.grid[1].length - 1] = self.glyphs.goalR;
     this.base = Array.from({ length: this.grid.length }, (_, i) => {
       return new Proxy([...this.grid[i].self], {
         set(t, p, r) {
@@ -145,38 +145,9 @@ class Game {
           });
         });
       }
-      move(k) {
-        switch (k) {
-          case 1:
-            this.x += this.moveBy;
-            break;
-          case -1:
-            this.x -= this.moveBy;
-            break;
-          case 2:
-            this.y += this.moveBy;
-            break;
-          case -2:
-            this.y -= this.moveBy;
-            break;
-        }
-        this.d = k;
-        this.puck();
-      }
-      puck() {
-        const cells = [
-          [self.grid[this.y][this.x - 1], -1],
-          [self.grid[this.y][this.x + 1], 1],
-          [self.grid[this.y - 1][this.x], -2],
-          [self.grid[this.y + 1][this.x], 2],
-          [self.grid[this.y - 1][this.x - 1], -3],
-          [self.grid[this.y - 1][this.x + 1], -4],
-          [self.grid[this.y + 1][this.x - 1], 3],
-          [self.grid[this.y + 1][this.x + 1], 4],
-        ];
-        cells.forEach((e) => {
-          if (e[0] == self.glyphs.ball) puck.v = e[1];
-        });
+      move(x, y) {
+        this.x += x;
+        this.y += -y;
       }
     }
     class Puck {
@@ -312,10 +283,8 @@ class Game {
       },
     };
     this.lPaddle = new Proxy(new Paddle(w, h + 1, "l"), paddleHandler);
-    this.rPaddle = new Proxy(
-      new Paddle(self.grid[0].length - w - 1, h + 1, "r"),
-      paddleHandler
-    );
+    let tempHalf = self.grid[0].length - w - 1;
+    this.rPaddle = new Proxy(new Paddle(tempHalf, h + 1, "r"), paddleHandler);
     const puck = new Proxy(new Puck(w * this.res + 1, h + 1, 0), {
       set(t, p, v) {
         const [oX, oY] = [t.x, t.y];
@@ -332,45 +301,53 @@ class Game {
 
     //eventlisteners
     let moveInterval;
-    let keys = [];
+
+    const keysBase = new Proxy([], {
+      set(t, p, v) {
+        if (p != "length" && !(p in t)) alert(`missing ${p}`);
+        let reflect = Reflect.set(t, p, v);
+        keysDynam.push(v);
+        return reflect;
+      },
+      get(t, p, v) {
+        const o = Reflect.get(t, p, v);
+        if (p === "splice") {
+          return function (...args) {
+            const result = o.apply(t, args);
+            return result;
+          };
+        }
+        return Reflect.get(t, p, v);
+      },
+    });
+    const keysDynam = [];
+    const wasd = Object.fromEntries(
+      ["w", "a", "s", "d"].map((e) => [e, self.lPaddle])
+    );
+    const arrow = Object.fromEntries(
+      ["Up", "Down", "Left", "Right"].map((e) => [`Arrow${e}`, self.rPaddle])
+    );
+    const paddleLookup = { ...wasd, ...arrow };
+    for (let key in paddleLookup) {
+      let t = paddleLookup[key];
+      if (["w", "ArrowUp"].includes(key)) paddleLookup[key] = [t, [0, 1]];
+      if (["a", "ArrowLeft"].includes(key)) paddleLookup[key] = [t, [-1, 0]];
+      if (["s", "ArrowDown"].includes(key)) paddleLookup[key] = [t, [0, -1]];
+      if (["d", "ArrowRight"].includes(key)) paddleLookup[key] = [t, [1, 0]];
+    }
     window.addEventListener("keydown", (event) => {
-      if (!keys.includes(event.key)) {
-        keys.push(event.key);
-        const setA = ["w", "a", "s", "d"];
-        const setB = ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"];
-        if (moveInterval) clearInterval(moveInterval);
-        moveInterval = setInterval(() => {
-          keys.forEach((k) => {
-            let paddle;
-            let set;
-            if (setA.includes(k)) {
-              paddle = self.lPaddle;
-              set = setA;
-            } else if (setB.includes(k)) {
-              paddle = self.rPaddle;
-              set = setB;
-            }
-            switch (set.indexOf(k)) {
-              case 0:
-                paddle.move(-2);
-                break;
-              case 1:
-                paddle.move(-1);
-                break;
-              case 2:
-                paddle.move(2);
-                break;
-              case 3:
-                paddle.move(1);
-                break;
-            }
-          });
-        }, self.speed);
-      } else return;
+      if (keysBase.includes(event.key)) return;
+      keysBase.push(event.key);
+      if (moveInterval) clearInterval(moveInterval);
+      moveInterval = setInterval(() => {
+        keysDynam.forEach((k) =>
+          paddleLookup[k][0].move(...paddleLookup[k][1])
+        );
+      }, self.speed);
     });
     window.addEventListener("keyup", (event) => {
-      keys.splice(keys.indexOf(event.key), 1);
-      if (keys.length == 0) clearInterval(moveInterval);
+      keysBase.splice(keysBase.indexOf(event.key), 1);
+      if (keysBase.length == 0) clearInterval(moveInterval);
     });
   }
 }
