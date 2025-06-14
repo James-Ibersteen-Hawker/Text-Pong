@@ -6,7 +6,16 @@ class Game {
   bot;
   destination;
   speed;
-  constructor(res, maxScore, roundCount, bot, destination, speed) {
+  directContact;
+  constructor(
+    res,
+    maxScore,
+    roundCount,
+    bot,
+    destination,
+    speed,
+    directContact
+  ) {
     (this.res = res),
       (this.maxScore = maxScore),
       (this.roundCount = roundCount),
@@ -29,7 +38,8 @@ class Game {
         fill: " ",
       }),
       (this.grid = []),
-      (this.ref = []);
+      (this.ref = []),
+      (this.directContact = directContact);
     this.Map();
   }
   Map() {
@@ -42,6 +52,7 @@ class Game {
     let h = 6;
     if (h % 2 == 0) h += 1;
     h = Math.max(h, 5);
+    let puckInit = false;
     this.grid = Array.from({ length: h * this.res + 3 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
@@ -76,6 +87,15 @@ class Game {
         e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
+      if (puckInit) {
+        if (
+          (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y) ||
+          (puck.x == self.lPaddle.x && puck.y == self.lPaddle.y)
+        ) {
+          puck.x += puck.v[0];
+          puck.y += puck.v[1];
+        }
+      }
     };
     this.grid[0].fill(this.glyphs.tbEdge);
     this.grid.at(-1).fill(this.glyphs.tbEdge);
@@ -170,8 +190,14 @@ class Game {
         const coords = Object.values(bitTable);
         coords.forEach((c) => {
           const [tX, tY] = c;
-          if (x + tX == puck.x && y + tY == puck.y) {
-            if (tX == this.v[0] && tY == this.v[1]) puck.v = c;
+          if (this.directContact == true) {
+            if (x + tX == puck.x && y + tY == puck.y) {
+              if (tX == this.v[0] && tY == this.v[1]) puck.v = c;
+            }
+          } else {
+            if (x + tX == puck.x && y + tY == puck.y) {
+              puck.v = c;
+            }
           }
         });
       }
@@ -206,17 +232,18 @@ class Game {
             self.lPaddle.move(control1);
             self.rPaddle.move(control2);
           }
+          self.grid[self.lPaddle.y][self.lPaddle.x] = self.glyphs.controller;
+          self.grid[self.rPaddle.y][self.rPaddle.x] = self.glyphs.controller;
           puck.x += this.v[0];
           puck.y += this.v[1];
           this.check();
         }, self.speed);
+        puckInit = true;
       }
       bounce(d, bool) {
         if (bool == false) puck.v = [-this.v[0], -this.v[1]];
         else if (bool == true) {
-          alert(true);
-          puck.x += -d[0];
-          puck.y += -d[1];
+          console.log("in puck");
           puck.v = [-this.v[0], -this.v[1]];
         }
       }
@@ -328,5 +355,13 @@ class Game {
     });
   }
 }
-let game = new Game(2, 10, 5, false, document.querySelector("#testGrid"), 80);
+let game = new Game(
+  2,
+  10,
+  5,
+  false,
+  document.querySelector("#testGrid"),
+  80,
+  false
+);
 game.grid.render();
