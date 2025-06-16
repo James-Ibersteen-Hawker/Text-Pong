@@ -33,10 +33,6 @@ class Game {
     this.Map();
   }
   Map() {
-    let tick = false;
-    const globalTick = setInterval(() => {
-      tick = !tick;
-    }, this.speed);
     const self = this;
     let w = 5;
     let h = 6;
@@ -183,18 +179,17 @@ class Game {
         });
       }
       move(c) {
-        if (puck.bounceFlag == false) {
-          let m = bitTable[c];
-          m == undefined ? (m = [0, 0]) : m;
-          const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
-          console.log(hasPuck);
-          if (!hasPuck) {
-            this.x += m[0];
-            this.y += m[1];
-          }
-          this.v = [...m];
-          this.hitPuck();
+        if (puck.bounceFlag == true) return;
+        let m = bitTable[c];
+        m == undefined ? (m = [0, 0]) : m;
+        const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
+        console.log(hasPuck);
+        if (!hasPuck) {
+          this.x += m[0];
+          this.y += m[1];
         }
+        this.v = [...m];
+        this.hitPuck();
       }
       hitPuck() {
         const [x, y] = [this.x, this.y];
@@ -249,9 +244,11 @@ class Game {
           }
           self.grid[self.lPaddle.y][self.lPaddle.x] = self.glyphs.controller;
           self.grid[self.rPaddle.y][self.rPaddle.x] = self.glyphs.controller;
-          puck.x += this.v[0];
-          puck.y += this.v[1];
-          this.check();
+          if (this.v[0] != 0 || this.v[1] != 0) {
+            puck.x += this.v[0];
+            puck.y += this.v[1];
+            this.check();
+          }
         }, self.speed);
         puckInit = true;
       }
@@ -279,10 +276,14 @@ class Game {
             self.grid[this.y + this.v[1]][this.x + this.v[0]]
           )
         ) {
-          this.bounceFlag = true;
+          if (
+            self.grid[this.y + this.v[1]][this.x + this.v[0]] !=
+            self.glyphs.controller
+          )
+            this.bounceFlag = true;
+          else this.bounceFlag = false;
           this.bounce(this.v);
-          this.bounceFlag = false;
-        }
+        } else this.bounceFlag = false;
       }
     }
     //controls
