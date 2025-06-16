@@ -422,6 +422,21 @@ class Game {
       if (keys.length == 0) puckFlag = false;
     });
   }
+  Open() {
+    const opening = document.querySelector("#opening");
+    this.type("JavaScript Air Hockey", opening);
+    setTimeout(
+      () => opening.append("Play"),
+      "JavaScript Air Hockey".length * 500
+    );
+  }
+  type(arg, loc) {
+    arg = arg.split("");
+    console.log(arg);
+    for (let i = 0; i < arg.length; i++) {
+      setTimeout(() => loc.append(arg[i]), i * 500);
+    }
+  }
 }
 let game = new Game(
   2,
