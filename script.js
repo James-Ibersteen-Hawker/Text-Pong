@@ -272,14 +272,21 @@ class Game {
         set[0][0] = this.v[0];
         set[1][1] = this.v[1];
         set = set.filter((v) => [Math.abs(v[0]), Math.abs(v[1])].includes(1));
-        set.forEach((s) => {
-          const t = self.grid[y + s[1]][x + s[0]];
-          const wall = ![self.glyphs.fill, self.glyphs.mid].includes(t);
-          const onPuckL = x == self.lPaddle.x && y == self.lPaddle.y;
-          const onPuckR = x == self.rPaddle.x && y == self.rPaddle.y;
-          if (wall && !onPuckL && !onPuckR) this.bounce(s, false);
-          else if (onPuckL || onPuckR) this.bounce(s, true);
-        });
+        const haslPaddle =
+          x + set[0][0] == self.lPaddle.x && y + set[1][1] == self.lPaddle.y;
+        const hasrPaddle =
+          x + set[0][0] == self.rPaddle.x && y + set[1][1] == self.rPaddle.y;
+        if (haslPaddle || hasrPaddle) this.v = [-this.v[0], -this.v[1]];
+        else {
+          set.forEach((s) => {
+            const t = self.grid[y + s[1]][x + s[0]];
+            const wall = ![self.glyphs.fill, self.glyphs.mid].includes(t);
+            const onPuckL = x == self.lPaddle.x && y == self.lPaddle.y;
+            const onPuckR = x == self.rPaddle.x && y == self.rPaddle.y;
+            if (wall && !onPuckL && !onPuckR) this.bounce(s, false);
+            else if (onPuckL || onPuckR) this.bounce(s, true);
+          });
+        }
       }
     }
     //controls
