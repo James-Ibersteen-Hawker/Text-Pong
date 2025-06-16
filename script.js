@@ -78,8 +78,6 @@ class Game {
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
     };
-    this.grid[0].fill(this.glyphs.tbEdge);
-    this.grid.at(-1).fill(this.glyphs.tbEdge);
     this.grid.forEach((e) => {
       e.forEach((_, i) => {
         if (i == w * self.res + 1) e.splice(i, 0, self.glyphs.mid);
@@ -87,6 +85,8 @@ class Game {
       });
       e.push(self.glyphs.sides);
     });
+    this.grid[0].fill(this.glyphs.tbEdge);
+    this.grid.at(-1).fill(this.glyphs.tbEdge);
     const tI = (h * self.res) / 2;
     this.grid[tI][0] = self.glyphs.goalL;
     this.grid[tI + 1][0] = self.glyphs.goalL;
@@ -115,6 +115,18 @@ class Game {
       new Array(this.base.length)
         .fill(null)
         .map((_, i) => [i, this.base[0].length - 1]),
+    ];
+    this.setVert = [
+      new Array(this.base.length).fill(null).map((_, i) => [i, 0]),
+      new Array(this.base.length)
+        .fill(null)
+        .map((_, i) => [i, this.base[0].length - 1]),
+    ];
+    this.setCorner = [
+      [0, 0],
+      [0, this.base[0].length - 1],
+      [this.base.length - 1, 0],
+      [this.base.length - 1, this.base[0].length - 1],
     ];
     const bitTable = {
       0: [0, 0],
@@ -171,16 +183,18 @@ class Game {
         });
       }
       move(c) {
-        let m = bitTable[c];
-        m == undefined ? (m = [0, 0]) : m;
-        const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
-        console.log(hasPuck);
-        if (!hasPuck) {
-          this.x += m[0];
-          this.y += m[1];
+        if (puck.bounceFlag == false) {
+          let m = bitTable[c];
+          m == undefined ? (m = [0, 0]) : m;
+          const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
+          console.log(hasPuck);
+          if (!hasPuck) {
+            this.x += m[0];
+            this.y += m[1];
+          }
+          this.v = [...m];
+          this.hitPuck();
         }
-        this.v = [...m];
-        this.hitPuck();
       }
       hitPuck() {
         const [x, y] = [this.x, this.y];
@@ -204,7 +218,11 @@ class Game {
       y;
       v;
       constructor(x, y, v) {
-        (this.x = x), (this.y = y), (this.v = v), (this.moveLoop = undefined);
+        (this.x = x),
+          (this.y = y),
+          (this.v = v),
+          (this.moveLoop = undefined),
+          (this.bounceFlag = false);
       }
       init() {
         self.grid[this.y][this.x] = self.glyphs.ball;
@@ -237,45 +255,32 @@ class Game {
         }, self.speed);
         puckInit = true;
       }
-      bounce(d, bool) {
+      bounce(d) {
         const [x, y] = [this.x, this.y];
-        const [colX, colY] = [d[0] + x, d[1] + y];
         const [vX, vY] = this.v;
-        const [colVX, colVY] = [this.x + vX, this.y + vY];
-        if (d[0] != 0 && d[1] == 0) this.v = [-this.v[0], this.v[1]];
-        else if (d[0] == 0 && d[1] != 0) this.v = [this.v[0], -this.v[1]];
+        const [dX, dY] = d;
+        if (self.setCorner.some((v) => v[0] == y + dY && v[1] == x + dX)) 
+          this.v = [-this.v[0], -this.v[1]];
         else if (
-          self.setVert[0].some((v) => v[0] == colY && v[1] == colX) ||
-          self.setVert[1].some((v) => v[0] == colY && v[1] == colX)
-        )
-          this.v = [-this.v[0], this.v[1]];
-        else if (
-          self.setHoriz[0].some((v) => v[0] == colY && v[1] == colX) ||
-          self.setHoriz[1].some((v) => v[0] == colY && v[1] == colX)
+          self.setHoriz[0].some((v) => v[0] == y + dY && v[1] == x + dX) ||
+          self.setHoriz[1].some((v) => v[0] == y + dY && v[1] == x + dX)
         )
           this.v = [this.v[0], -this.v[1]];
+        else if (
+          self.setVert[0].some((v) => v[0] == y + dY && v[1] == x + dX) ||
+          self.setVert[1].some((v) => v[0] == y + dY && v[1] == x + dX)
+        )
+          this.v = [-this.v[0], this.v[1]];
       }
       check() {
-        let set = new Array(2).fill(null).map(() => [0, 0]);
-        const [x, y] = [this.x, this.y];
-        set[0][0] = this.v[0];
-        set[1][1] = this.v[1];
-        set = set.filter((v) => [Math.abs(v[0]), Math.abs(v[1])].includes(1));
-        const haslPaddle =
-          x + set[0][0] == self.lPaddle.x && y + set[1][1] == self.lPaddle.y;
-        const hasrPaddle =
-          x + set[0][0] == self.rPaddle.x && y + set[1][1] == self.rPaddle.y;
-        if ((haslPaddle || hasrPaddle) && set[0][0] != 0 && set[1][1] != 0)
-          this.v = [-this.v[0], -this.v[1]];
-        else {
-          set.forEach((s) => {
-            const t = self.grid[y + s[1]][x + s[0]];
-            const wall = ![self.glyphs.fill, self.glyphs.mid].includes(t);
-            const onPuckL = x == self.lPaddle.x && y == self.lPaddle.y;
-            const onPuckR = x == self.rPaddle.x && y == self.rPaddle.y;
-            if (wall && !onPuckL && !onPuckR) this.bounce(s, false);
-            else if (onPuckL || onPuckR) this.bounce(s, true);
-          });
+        if (
+          ![self.glyphs.fill, self.glyphs.mid].includes(
+            self.grid[this.y + this.v[1]][this.x + this.v[0]]
+          )
+        ) {
+          this.bounceFlag = true;
+          this.bounce(this.v);
+          this.bounceFlag = false;
         }
       }
     }
