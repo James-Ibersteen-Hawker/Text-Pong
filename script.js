@@ -259,7 +259,7 @@ class Game {
         const [x, y] = [this.x, this.y];
         const [vX, vY] = this.v;
         const [dX, dY] = d;
-        if (self.setCorner.some((v) => v[0] == y + dY && v[1] == x + dX)) 
+        if (self.setCorner.some((v) => v[0] == y + dY && v[1] == x + dX))
           this.v = [-this.v[0], -this.v[1]];
         else if (
           self.setHoriz[0].some((v) => v[0] == y + dY && v[1] == x + dX) ||
@@ -271,6 +271,7 @@ class Game {
           self.setVert[1].some((v) => v[0] == y + dY && v[1] == x + dX)
         )
           this.v = [-this.v[0], this.v[1]];
+        else this.v = [-this.v[0], -this.v[1]];
       }
       check() {
         if (
