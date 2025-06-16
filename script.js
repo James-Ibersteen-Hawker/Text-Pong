@@ -5,8 +5,8 @@ class Game {
   roundCount;
   destination;
   speed;
-  directContact;
-  constructor(res, maxScore, roundCount, destination, speed, directContact) {
+  scoreDestination;
+  constructor(res, maxScore, roundCount, destination, speed, scoreDestination) {
     (this.res = res),
       (this.maxScore = maxScore),
       (this.roundCount = roundCount),
@@ -29,11 +29,16 @@ class Game {
       }),
       (this.grid = []),
       (this.ref = []),
-      (this.directContact = directContact);
+      (this.scores = {
+        lScore: 0,
+        rScore: 0,
+      }),
+      (this.scoreDestination = scoreDestination);
     this.Map();
   }
   Map() {
     const self = this;
+    let setRender = false;
     let w = 5;
     let h = 6;
     if (h % 2 == 0) h += 1;
@@ -44,7 +49,8 @@ class Game {
       return new Proxy(arr, {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
-          self.grid.render();
+          // self.grid.render();
+          setRender = true;
           return reflect;
         },
         get(t, p, r) {
@@ -56,6 +62,31 @@ class Game {
     });
     this.ref = Array.from({ length: this.grid.length }, (_, i) => {
       return [...this.grid[i].self].map(() => "b");
+    });
+    this.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   ||   Player 2: ${self.scores.rScore}`;
+    this.scores = new Proxy(this.scores, {
+      set(t, p, v) {
+        let reflect = Reflect.set(t, p, v);
+        self.scoreDestination.textContent = "SCORE";
+        puck.v = [0, 0];
+        puck.bounceFlag = true;
+        setTimeout(() => {
+          puck.x = w * self.res + 1;
+          puck.y = h + 1;
+          puck.v = [0, 0];
+          puck.bounceFlag = false;
+          self.lPaddle.x = w;
+          self.lPaddle.y = h + 1;
+          self.rPaddle.x = self.grid[0].length - w - 1;
+          self.rPaddle.y = h + 1;
+          self.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   ||   Player 2: ${self.scores.rScore}`;
+        }, 750);
+        if (self.scores[p] == self.maxScore) alert("game over");
+        return reflect;
+      },
+      get(t, p, v) {
+        return Reflect.get(t, p, v);
+      },
     });
     for (let i = 0; i < this.ref.length; i++) {
       for (let q = 0; q < this.ref[i].length; q++) {
@@ -73,6 +104,7 @@ class Game {
         e.forEach((a) => self.destination.append(a));
         self.destination.insertAdjacentHTML("beforeend", "<br>");
       });
+      setRender = false;
     };
     this.grid.forEach((e) => {
       e.forEach((_, i) => {
@@ -179,31 +211,32 @@ class Game {
         });
       }
       move(c) {
+        console.log("here");
         if (puck.bounceFlag == true) return;
         let m = bitTable[c];
         m == undefined ? (m = [0, 0]) : m;
-        const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
-        console.log(hasPuck);
-        if (!hasPuck) {
-          this.x += m[0];
-          this.y += m[1];
+        if (
+          Math.abs(self.lPaddle.x - self.rPaddle.x) == 3 &&
+          self.lPaddle.y == self.rPaddle.y
+        )
+          return;
+        else {
+          const hasPuck = this.x + m[0] == puck.x && this.y + m[1] == puck.y;
+          if (!hasPuck) {
+            this.x += m[0];
+            this.y += m[1];
+          }
+          this.v = [...m];
+          this.hitPuck();
         }
-        this.v = [...m];
-        this.hitPuck();
       }
       hitPuck() {
         const [x, y] = [this.x, this.y];
         const coords = Object.values(bitTable);
         coords.forEach((c) => {
           const [tX, tY] = c;
-          if (this.directContact == true) {
-            if (x + tX == puck.x && y + tY == puck.y) {
-              if (tX == this.v[0] && tY == this.v[1]) puck.v = c;
-            }
-          } else {
-            if (x + tX == puck.x && y + tY == puck.y) {
-              puck.v = c;
-            }
+          if (x + tX == puck.x && y + tY == puck.y) {
+            if (tX == this.v[0] && tY == this.v[1]) puck.v = c;
           }
         });
       }
@@ -249,6 +282,7 @@ class Game {
             puck.y += this.v[1];
             this.check();
           }
+          if (setRender == true) self.grid.render();
         }, self.speed);
         puckInit = true;
       }
@@ -279,15 +313,22 @@ class Game {
           const [x, y] = [this.x + this.v[0], this.y + this.v[1]];
           if (self.grid[y][x] != self.glyphs.controller) this.bounceFlag = true;
           else this.bounceFlag = false;
-          if (self.grid[y][x] == self.glyphs.goalR)
+          if (self.grid[this.y][x] == self.glyphs.goalR)
             this.score(self.lPaddle.side);
-          else if (self.grid[y][x] == self.glyphs.goalL)
+          else if (self.grid[this.y][x] == self.glyphs.goalL)
             this.score(self.rPaddle.side);
           this.bounce(this.v);
         } else this.bounceFlag = false;
       }
       score(side) {
-        alert(`goal ${side}!`);
+        switch (side) {
+          case "r":
+            self.scores.rScore++;
+            break;
+          case "l":
+            self.scores.lScore++;
+            break;
+        }
       }
     }
     //controls
@@ -382,5 +423,11 @@ class Game {
     });
   }
 }
-let game = new Game(2, 10, 5, document.querySelector("#testGrid"), 80, true);
-game.grid.render();
+let game = new Game(
+  2,
+  4,
+  5,
+  document.querySelector("#pong"),
+  80,
+  document.querySelector("#scores")
+);
