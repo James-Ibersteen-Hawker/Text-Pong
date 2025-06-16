@@ -276,14 +276,18 @@ class Game {
             self.grid[this.y + this.v[1]][this.x + this.v[0]]
           )
         ) {
-          if (
-            self.grid[this.y + this.v[1]][this.x + this.v[0]] !=
-            self.glyphs.controller
-          )
-            this.bounceFlag = true;
+          const [x, y] = [this.x + this.v[0], this.y + this.v[1]];
+          if (self.grid[y][x] != self.glyphs.controller) this.bounceFlag = true;
           else this.bounceFlag = false;
+          if (self.grid[y][x] == self.glyphs.goalR)
+            this.score(self.lPaddle.side);
+          else if (self.grid[y][x] == self.glyphs.goalL)
+            this.score(self.rPaddle.side);
           this.bounce(this.v);
         } else this.bounceFlag = false;
+      }
+      score(side) {
+        alert(`goal ${side}!`);
       }
     }
     //controls
