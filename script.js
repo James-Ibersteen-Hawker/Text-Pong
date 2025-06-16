@@ -3,23 +3,13 @@ class Game {
   res;
   maxScore;
   roundCount;
-  bot;
   destination;
   speed;
   directContact;
-  constructor(
-    res,
-    maxScore,
-    roundCount,
-    bot,
-    destination,
-    speed,
-    directContact
-  ) {
+  constructor(res, maxScore, roundCount, destination, speed, directContact) {
     (this.res = res),
       (this.maxScore = maxScore),
       (this.roundCount = roundCount),
-      (this.bot = bot),
       (this.scores = {
         score1: 0,
         score2: 0,
@@ -114,6 +104,18 @@ class Game {
         },
       });
     });
+    this.setHoriz = [
+      new Array(this.base[0].length)
+        .fill(null)
+        .map((_, i) => [self.base.length - 1, i]),
+      new Array(this.base[0].length).fill(null).map((_, i) => [0, i]),
+    ];
+    this.setVert = [
+      new Array(this.base.length).fill(null).map((_, i) => [i, 0]),
+      new Array(this.base.length)
+        .fill(null)
+        .map((_, i) => [i, this.base[0].length - 1]),
+    ];
     const bitTable = {
       0: [0, 0],
       1: [0, -1],
@@ -236,21 +238,33 @@ class Game {
         puckInit = true;
       }
       bounce(d, bool) {
-        if (d == [0, 0]) alert("0 error");
-        const [dX, dY] = d;
-        const [vX, vY] = puck.v;
-        //right left
-        if (dX != 0 && dY == 0) puck.v = [-vX, 0];
-        //up down
-        else if (dX == 0 && dY != 0) puck.v = [0, -vY];
-        //horiz diag
-        else {
-          const beyond =
-            self.grid[this.y + dY + 1 * (dY / Math.abs(dY))][
-              this.x + dX + 1 * (dX / Math.abs(dX))
-            ];
-        }
-        //vert diag
+        const [x, y] = [this.x, this.y];
+        const [colX, colY] = [d[0] + x, d[1] + y];
+        const [vX, vY] = this.v;
+        const [colVX, colVY] = [this.x + vX, this.y + vY];
+        if (
+          (colVX == self.lPaddle.x && colVY == self.lPaddle.y) ||
+          (colVX == self.rPaddle.x && colVY == self.rPaddle.y)
+        ) {
+          alert("here");
+          this.v = [-this.v[0], -this.v[1]];
+        } else if (vX != 0 && vY == 0) this.v = [-this.v[0], this.v[1]];
+        else if (vX == 0 && vY != 0) this.v = [this.v[0], -this.v[1]];
+        else if (
+          (colX == self.lPaddle.x && colY == self.lPaddle.y) ||
+          (colX == self.rPaddle.x && colY == self.rPaddle.y)
+        ) {
+          this.v = [-this.v[0], -this.v[1]];
+        } else if (
+          self.setVert[0].some((v) => v[0] == colY && v[1] == colX) ||
+          self.setVert[1].some((v) => v[0] == colY && v[1] == colX)
+        )
+          this.v = [-this.v[0], this.v[1]];
+        else if (
+          self.setHoriz[0].some((v) => v[0] == colY && v[1] == colX) ||
+          self.setHoriz[1].some((v) => v[0] == colY && v[1] == colX)
+        )
+          this.v = [this.v[0], -this.v[1]];
       }
       check() {
         let set = new Array(2).fill(null).map(() => [0, 0]);
@@ -360,13 +374,5 @@ class Game {
     });
   }
 }
-let game = new Game(
-  2,
-  10,
-  5,
-  false,
-  document.querySelector("#testGrid"),
-  80,
-  true
-);
+let game = new Game(2, 10, 5, document.querySelector("#testGrid"), 80, true);
 game.grid.render();
