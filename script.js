@@ -242,20 +242,9 @@ class Game {
         const [colX, colY] = [d[0] + x, d[1] + y];
         const [vX, vY] = this.v;
         const [colVX, colVY] = [this.x + vX, this.y + vY];
-        if (
-          (colVX == self.lPaddle.x && colVY == self.lPaddle.y) ||
-          (colVX == self.rPaddle.x && colVY == self.rPaddle.y)
-        ) {
-          alert("here");
-          this.v = [-this.v[0], -this.v[1]];
-        } else if (vX != 0 && vY == 0) this.v = [-this.v[0], this.v[1]];
-        else if (vX == 0 && vY != 0) this.v = [this.v[0], -this.v[1]];
+        if (d[0] != 0 && d[1] == 0) this.v = [-this.v[0], this.v[1]];
+        else if (d[0] == 0 && d[1] != 0) this.v = [this.v[0], -this.v[1]];
         else if (
-          (colX == self.lPaddle.x && colY == self.lPaddle.y) ||
-          (colX == self.rPaddle.x && colY == self.rPaddle.y)
-        ) {
-          this.v = [-this.v[0], -this.v[1]];
-        } else if (
           self.setVert[0].some((v) => v[0] == colY && v[1] == colX) ||
           self.setVert[1].some((v) => v[0] == colY && v[1] == colX)
         )
@@ -276,7 +265,8 @@ class Game {
           x + set[0][0] == self.lPaddle.x && y + set[1][1] == self.lPaddle.y;
         const hasrPaddle =
           x + set[0][0] == self.rPaddle.x && y + set[1][1] == self.rPaddle.y;
-        if (haslPaddle || hasrPaddle) this.v = [-this.v[0], -this.v[1]];
+        if ((haslPaddle || hasrPaddle) && set[0][0] != 0 && set[1][1] != 0)
+          this.v = [-this.v[0], -this.v[1]];
         else {
           set.forEach((s) => {
             const t = self.grid[y + s[1]][x + s[0]];
