@@ -33,7 +33,7 @@ class Game {
         rScore: 0,
       }),
       (this.scoreDestination = scoreDestination);
-    this.Map();
+    this.Open();
   }
   Map() {
     this.openingFlag = true;
@@ -447,11 +447,32 @@ class Game {
           setTimeout(() => selector(arg), 250);
         }, 250);
       }
-      setTimeout(() => selector(play), ">  Play".length * 500);
+      let playFlag = false;
+      setTimeout(() => {
+        selector(play);
+        window.addEventListener("keydown", (event) => {
+          if (self.openingFlag == true) return;
+          switch (event.key) {
+            case "Enter":
+              if (playFlag == false) {
+                play.setAttribute("style", "display: none")
+                const p1 = document.createElement("div");
+                const p2 = document.createElement("div");
+                p1.textContent = "Player 1 Name";
+                p2.textContent = "Player 2 Name";
+                const input1 = document.createElement("div");
+                input1.classList.add("active");
+                const input2 = document.createElement("div");
+                opening.insertAdjacentElement("afterend", p1)
+                opening.insertAdjacentElement("afterend", input1)
+                opening.insertAdjacentElement("afterend", p2)
+                opening.insertAdjacentElement("afterend", input2)
+              };
+              
+              break;
+        });
+      }, ">  Play".length * 500);
     }, "JavaScript Air Hockey".length * 500);
-    window.addEventListener("keydown", (event) => {
-      if (self.openingFlag == true) return;
-    });
   }
   type(arg, loc) {
     arg = arg.split("");
