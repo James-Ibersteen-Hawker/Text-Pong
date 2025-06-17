@@ -21,7 +21,6 @@ class Game {
         tbEdge: "-",
         ball: "█",
         sides: ":",
-        corner: "+",
         goalL: "]",
         goalR: "[",
         controller: "0",
@@ -34,9 +33,12 @@ class Game {
         rScore: 0,
       }),
       (this.scoreDestination = scoreDestination);
-    this.Map();
+    this.Open();
   }
   Map() {
+    this.openingFlag = true;
+    this.scoreDestination.setAttribute("style", "display: block");
+    this.destination.setAttribute("style", "display: block");
     const self = this;
     let setRender = false;
     let w = 5;
@@ -63,7 +65,7 @@ class Game {
     this.ref = Array.from({ length: this.grid.length }, (_, i) => {
       return [...this.grid[i].self].map(() => "b");
     });
-    this.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   ||   Player 2: ${self.scores.rScore}`;
+    this.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   |   Player 2: ${self.scores.rScore}`;
     this.scores = new Proxy(this.scores, {
       set(t, p, v) {
         let reflect = Reflect.set(t, p, v);
@@ -79,7 +81,7 @@ class Game {
           self.lPaddle.y = h + 1;
           self.rPaddle.x = self.grid[0].length - w - 1;
           self.rPaddle.y = h + 1;
-          self.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   ||   Player 2: ${self.scores.rScore}`;
+          self.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   |   Player 2: ${self.scores.rScore}`;
         }, 750);
         if (self.scores[p] == self.maxScore) alert("game over");
         return reflect;
@@ -211,13 +213,14 @@ class Game {
         });
       }
       move(c) {
-        console.log("here");
         if (puck.bounceFlag == true) return;
         let m = bitTable[c];
         m == undefined ? (m = [0, 0]) : m;
+        this.tempV = [...m];
         if (
-          Math.abs(self.lPaddle.x - self.rPaddle.x) == 3 &&
-          self.lPaddle.y == self.rPaddle.y
+          Math.abs(self.lPaddle.x - self.rPaddle.x) < 4 &&
+          self.lPaddle.y == self.rPaddle.y &&
+          (self.lPaddle.tempV[0] == 1 || self.rPaddle.tempV[0] == -1)
         )
           return;
         else {
@@ -423,12 +426,29 @@ class Game {
     });
   }
   Open() {
+    this.openingFlag = false;
+    const self = this;
     const opening = document.querySelector("#opening");
+    this.scoreDestination.setAttribute("style", "display: none");
+    this.destination.setAttribute("style", "display: none");
     this.type("JavaScript Air Hockey", opening);
-    setTimeout(
-      () => opening.append("Play"),
-      "JavaScript Air Hockey".length * 500
-    );
+    setTimeout(() => {
+      opening.insertAdjacentHTML("beforeend", "<br><br>");
+      const play = document.createElement("div");
+      opening.insertAdjacentElement("afterend", play);
+      this.type("  Play", play);
+      function selector(arg) {
+        arg.textContent = `  ${arg.textContent.substring(2)}`;
+        setTimeout(() => {
+          arg.textContent = `> ${arg.textContent.substring(2)}`;
+          setTimeout(() => selector(arg), 250);
+        }, 250);
+      }
+      setTimeout(() => selector(play), ">  Play".length * 500);
+    }, "JavaScript Air Hockey".length * 500);
+    window.addEventListener("keydown", (event) => {
+      if (self.openingFlag == true) return;
+    });
   }
   type(arg, loc) {
     arg = arg.split("");
