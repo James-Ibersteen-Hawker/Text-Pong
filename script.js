@@ -33,7 +33,7 @@ class Game {
         rScore: 0,
       }),
       (this.scoreDestination = scoreDestination);
-    this.Open();
+    this.Map();
   }
   Map() {
     this.openingFlag = true;
@@ -83,7 +83,10 @@ class Game {
           self.rPaddle.y = h + 1;
           self.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   |   Player 2: ${self.scores.rScore}`;
         }, 750);
-        if (self.scores[p] == self.maxScore) alert("game over");
+        if (self.scores[p] == self.maxScore) {
+          alert("game over");
+          location.reload();
+        }
         return reflect;
       },
       get(t, p, v) {
