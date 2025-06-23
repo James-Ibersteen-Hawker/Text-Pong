@@ -37,15 +37,13 @@ class Game {
   }
   Map() {
     this.openingFlag = true;
-    this.scoreDestination.setAttribute("style", "display: block");
-    this.destination.setAttribute("style", "display: block");
+    [this.scoreDestination, this.destination].forEach(self.on);
     const self = this;
     let setRender = false;
     let w = 5;
     let h = 6;
     if (h % 2 == 0) h += 1;
     h = Math.max(h, 5);
-    let puckInit = false;
     this.grid = Array.from({ length: h * this.res + 3 }, () => {
       let arr = new Array(w * this.res * 2 + 1).fill(this.glyphs.fill);
       return new Proxy(arr, {
@@ -142,12 +140,6 @@ class Game {
         .fill(null)
         .map((_, i) => [self.base.length - 1, i]),
       new Array(this.base[0].length).fill(null).map((_, i) => [0, i]),
-    ];
-    this.setVert = [
-      new Array(this.base.length).fill(null).map((_, i) => [i, 0]),
-      new Array(this.base.length)
-        .fill(null)
-        .map((_, i) => [i, this.base[0].length - 1]),
     ];
     this.setVert = [
       new Array(this.base.length).fill(null).map((_, i) => [i, 0]),
@@ -290,7 +282,6 @@ class Game {
           }
           if (setRender == true) self.grid.render();
         }, self.speed);
-        puckInit = true;
       }
       bounce(d) {
         const [x, y] = [this.x, this.y];
@@ -431,55 +422,72 @@ class Game {
   Open() {
     this.openingFlag = false;
     const self = this;
-    const opening = document.querySelector("#opening");
-    this.scoreDestination.setAttribute("style", "display: none");
-    this.destination.setAttribute("style", "display: none");
-    this.type("JavaScript Air Hockey", opening);
-    setTimeout(() => {
-      opening.insertAdjacentHTML("beforeend", "<br><br>");
-      const play = document.createElement("div");
-      opening.insertAdjacentElement("afterend", play);
-      this.type("  Play", play);
-      function selector(arg) {
-        arg.textContent = `  ${arg.textContent.substring(2)}`;
-        setTimeout(() => {
-          arg.textContent = `> ${arg.textContent.substring(2)}`;
-          setTimeout(() => selector(arg), 250);
-        }, 250);
+    const time = 250;
+    HTMLElement.prototype.Type = function (arg, t) {
+      const inSelf = this;
+      return new Promise((resolve, reject) => {
+        try {
+          arg = arg.split("");
+          arg.forEach((e, i) => setTimeout(() => inSelf.append(e), i * t));
+          setTimeout(() => resolve(inSelf), arg.length * t);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+    HTMLElement.prototype.select = function (t, bool = false, func = false) {
+      const save = this.textContent;
+      const inSelf = this;
+      const text = save.split("");
+      const swap = [">", " "];
+      const end = text.slice(1).join("");
+      let i = swap.indexOf(text[0]);
+      const interval = setInterval(
+        () => (this.textContent = swap[(i ^= 1)] + end),
+        t
+      );
+      if (bool == true) {
+        const controlFunction = (e) => {
+          if (e.key == "Enter") {
+            clearInterval(interval);
+            window.removeEventListener("keyup", controlFunction);
+            if (func) func();
+          }
+        };
+        window.addEventListener("keyup", controlFunction);
       }
-      let playFlag = false;
-      setTimeout(() => {
-        selector(play);
-        window.addEventListener("keydown", (event) => {
-          if (self.openingFlag == true) return;
-          switch (event.key) {
-            case "Enter":
-              if (playFlag == false) {
-                play.setAttribute("style", "display: none")
-                const p1 = document.createElement("div");
-                const p2 = document.createElement("div");
-                p1.textContent = "Player 1 Name";
-                p2.textContent = "Player 2 Name";
-                const input1 = document.createElement("div");
-                input1.classList.add("active");
-                const input2 = document.createElement("div");
-                opening.insertAdjacentElement("afterend", p1)
-                opening.insertAdjacentElement("afterend", input1)
-                opening.insertAdjacentElement("afterend", p2)
-                opening.insertAdjacentElement("afterend", input2)
-              };
-              
-              break;
+      return {
+        stop() {
+          clearInterval(interval);
+          inSelf.textContent = save;
+        },
+      };
+    };
+    const opening = document.querySelector("#opening");
+    [this.scoreDestination, this.destination].forEach(self.off);
+    opening
+      .Type("Javascript Air Hockey", time)
+      .then(() => {
+        const play = document.createElement("div");
+        opening.insertAdjacentHTML("beforeend", "<br><br>");
+        opening.append(play);
+        return play.Type("  Play", time);
+      })
+      .then((e) => {
+        e.select(time, true, () => {
+          opening.textContent = "";
+          e.remove();
         });
-      }, ">  Play".length * 500);
-    }, "JavaScript Air Hockey".length * 500);
+      })
+      .catch((error) => {
+        throw new Error(error);
+      });
   }
-  type(arg, loc) {
-    arg = arg.split("");
-    console.log(arg);
-    for (let i = 0; i < arg.length; i++) {
-      setTimeout(() => loc.append(arg[i]), i * 500);
-    }
+  off(e) {
+    e.setAttribute("style", "display: none;");
+  }
+  on(e) {
+    e.setAttribute("style", "display: block;");
   }
 }
 let game = new Game(
