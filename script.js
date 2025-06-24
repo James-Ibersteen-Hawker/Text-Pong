@@ -447,14 +447,17 @@ class Game {
         t
       );
       if (bool == true) {
+        return new Promise((resolve, reject) => {
         const controlFunction = (e) => {
           if (e.key == "Enter") {
             clearInterval(interval);
             window.removeEventListener("keyup", controlFunction);
-            if (func) func();
+            if (func) func(resolve);
+            else resolve();
           }
         };
         window.addEventListener("keyup", controlFunction);
+        });
       }
       return {
         stop() {
@@ -474,11 +477,15 @@ class Game {
         return play.Type("  Play", time);
       })
       .then((e) => {
-        e.select(time, true, () => {
+        e.select(time, true, (resolve) => {
           opening.textContent = "";
           e.remove();
+          opening.Type("Input Player Names", time)
+          .then(() => {
+            resolve();
+          })
         });
-      })
+      }).then(() => {alert("here")})
       .catch((error) => {
         throw new Error(error);
       });
