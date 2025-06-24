@@ -419,7 +419,7 @@ class Game {
       if (keys.length == 0) puckFlag = false;
     });
   }
-  Open() {
+  async Open() {
     this.openingFlag = false;
     const self = this;
     const time = 250;
@@ -435,7 +435,7 @@ class Game {
         }
       });
     };
-    HTMLElement.prototype.select = function (t, bool = false, func = false) {
+    HTMLElement.prototype.select = async function (t, bool = false, func = false) {
       const save = this.textContent;
       const inSelf = this;
       const text = save.split("");
@@ -447,13 +447,16 @@ class Game {
         t
       );
       if (bool == true) {
-        return new Promise((resolve, reject) => {
-        const controlFunction = (e) => {
+        return new Promise(async (resolve, reject) => {
+        const controlFunction = async (e) => {
           if (e.key == "Enter") {
             clearInterval(interval);
             window.removeEventListener("keyup", controlFunction);
-            if (func) func(resolve);
-            else resolve();
+            if (func) {
+              await func();
+              resolve();
+            }
+            else reject("no function");
           }
         };
         window.addEventListener("keyup", controlFunction);
@@ -468,27 +471,21 @@ class Game {
     };
     const opening = document.querySelector("#opening");
     [this.scoreDestination, this.destination].forEach(self.off);
-    opening
-      .Type("Javascript Air Hockey", time)
-      .then(() => {
-        const play = document.createElement("div");
-        opening.insertAdjacentHTML("beforeend", "<br><br>");
-        opening.append(play);
-        return play.Type("  Play", time);
-      })
-      .then((e) => {
-        e.select(time, true, (resolve) => {
-          opening.textContent = "";
-          e.remove();
-          opening.Type("Input Player Names", time)
-          .then(() => {
-            resolve();
-          })
-        });
-      }).then(() => {alert("here")})
-      .catch((error) => {
-        throw new Error(error);
-      });
+    try {
+    await opening.Type("Javascript Air Hockey", time)
+    const play = document.createElement("div");
+    opening.insertAdjacentHTML("beforeend", "<br><br>");
+    opening.append(play);
+    await play.Type("  Play", time);
+    await play.select(time, true, async () => {
+      opening.textContent = "";
+      play.remove();
+      await opening.Type("Input Player Names", time);
+    });
+    alert("here");
+    } catch (error) {
+      throw new Error(error);
+    }
   }
   off(e) {
     e.setAttribute("style", "display: none;");
