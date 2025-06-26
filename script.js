@@ -469,6 +469,23 @@ class Game {
         },
       };
     };
+    HTMLElement.prototype.falseInput = function (bool = false, keyArr, func, id) {
+      if (!bool) {
+        if (!this[id]) {
+        const listener = (e) => {
+          if (keyArr.includes(e.key)) func();
+        }
+        this[id] = listener;
+        this.addEventListener("keydown", this[id]);
+        }
+        return id;
+      } else {
+        if (this[id]) {
+          this.removeEventListener("keydown", this[id]);
+          this[id] = undefined;
+        }
+      }
+    }
     const opening = document.querySelector("#opening");
     [this.scoreDestination, this.destination].forEach(self.off);
     try {
@@ -480,9 +497,30 @@ class Game {
     await play.select(time, true, async () => {
       opening.textContent = "";
       play.remove();
-      await opening.Type("Input Player Names", time);
+      await opening.Type("Input Player Names:", time);
     });
     alert("here");
+    const [p1, p2] = new Array(2).fill(null).map(() => document.createElement("div")});
+    const [ph1, ph2] = new Array(2).fill(null).map(() => document.createElement("div")});
+    opening.append(ph1);
+    opening.append(p1);
+    await ph1.Type("Player 1 Name:", time);
+    const nameMax = 10;
+    const p1ID = p1.falseInput(false, ['a', 'b', 'c', 'd', 'e', 'f', 'g','h', 'i', 'j', 'k', 'l', 'm', 'n','o', 'p', 'q', 'r', 's', 't', 'u','v', 'w', 'x', 'y', 'z'], () => {
+      alert("falseinput");
+      e.preventDefault();
+      if (p1.textContent.length - 1 <= nameMax) p1.insertAdjacentText("beforeend", e.key);
+    }, Symbol("type"));
+    const p1ID2 = p1.falseInput(false, ["Backspace"], () => {
+      alert("backspace");
+      e.preventDefault();
+      p1.textContent = p1.textContent.substring(0,p1.textContent.length - 1);
+    }, Symbol("del"));
+    await p1.select(time, true, () => {
+      p1.falseInput(true, null, null, p1ID);
+      p1.falseInput(true, null, null, p1ID2);
+      alert("finished inputting player1 name");
+    }
     } catch (error) {
       throw new Error(error);
     }
