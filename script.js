@@ -473,7 +473,7 @@ class Game {
       if (!bool) {
         if (!this[id]) {
         const listener = (e) => {
-          if (keyArr.includes(e.key)) func();
+          if (keyArr.includes(e.key)) func(e);
         }
         this[id] = listener;
         this.addEventListener("keydown", this[id]);
@@ -500,18 +500,18 @@ class Game {
       await opening.Type("Input Player Names:", time);
     });
     alert("here");
-    const [p1, p2] = new Array(2).fill(null).map(() => document.createElement("div")});
-    const [ph1, ph2] = new Array(2).fill(null).map(() => document.createElement("div")});
+    const [p1, p2] = new Array(2).fill(null).map(() => document.createElement("div"));
+    const [ph1, ph2] = new Array(2).fill(null).map(() => document.createElement("div"));
     opening.append(ph1);
     opening.append(p1);
     await ph1.Type("Player 1 Name:", time);
     const nameMax = 10;
-    const p1ID = p1.falseInput(false, ['a', 'b', 'c', 'd', 'e', 'f', 'g','h', 'i', 'j', 'k', 'l', 'm', 'n','o', 'p', 'q', 'r', 's', 't', 'u','v', 'w', 'x', 'y', 'z'], () => {
+    const p1ID = p1.falseInput(false, ['a', 'b', 'c', 'd', 'e', 'f', 'g','h', 'i', 'j', 'k', 'l', 'm', 'n','o', 'p', 'q', 'r', 's', 't', 'u','v', 'w', 'x', 'y', 'z'], (e) => {
       alert("falseinput");
       e.preventDefault();
       if (p1.textContent.length - 1 <= nameMax) p1.insertAdjacentText("beforeend", e.key);
     }, Symbol("type"));
-    const p1ID2 = p1.falseInput(false, ["Backspace"], () => {
+    const p1ID2 = p1.falseInput(false, ["Backspace"], (e) => {
       alert("backspace");
       e.preventDefault();
       p1.textContent = p1.textContent.substring(0,p1.textContent.length - 1);
