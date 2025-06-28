@@ -474,6 +474,7 @@ class Game {
       if (bool == true) {
         return new Promise(async (resolve, reject) => {
           const controlFunction = async (e) => {
+            if (enterFlag == true) return;
             if (e.key == "Enter") {
               clearInterval(interval);
               window.removeEventListener("keyup", controlFunction);
