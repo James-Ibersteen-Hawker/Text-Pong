@@ -422,20 +422,45 @@ class Game {
   async Open() {
     this.openingFlag = false;
     const self = this;
-    const time = 250;
-    HTMLElement.prototype.Type = function (arg, t) {
+    let time = 200;
+    const speedUpInt = 5;
+    const selectTime = 200;
+    function Time() {
+      return time;
+    }
+    let typeFlag = false;
+    let enterFlag = false;
+    HTMLElement.prototype.Type = function (arg, mult) {
       const inSelf = this;
-      return new Promise((resolve, reject) => {
+      return new Promise(async (resolveAll, reject) => {
         try {
+          typeFlag = true;
           arg = arg.split("");
-          arg.forEach((e, i) => setTimeout(() => inSelf.append(e), i * t));
-          setTimeout(() => resolve(inSelf), arg.length * t);
+          for (let i = 0; i < arg.length; i++) {
+            await letter(arg[i], Time() * mult);
+            if (i == arg.length - 1) {
+              resolveAll(inSelf);
+              typeFlag = false;
+            }
+          }
+          function letter(v, t) {
+            return new Promise((resolve, reject) => {
+              setTimeout(() => {
+                inSelf.append(v);
+                resolve();
+              }, t);
+            });
+          }
         } catch (error) {
           reject(error);
         }
       });
     };
-    HTMLElement.prototype.select = async function (t, bool = false, func = false) {
+    HTMLElement.prototype.select = async function (
+      t,
+      bool = false,
+      func = false
+    ) {
       const save = this.textContent;
       const inSelf = this;
       const text = save.split("");
@@ -448,18 +473,17 @@ class Game {
       );
       if (bool == true) {
         return new Promise(async (resolve, reject) => {
-        const controlFunction = async (e) => {
-          if (e.key == "Enter") {
-            clearInterval(interval);
-            window.removeEventListener("keyup", controlFunction);
-            if (func) {
-              await func();
-              resolve();
+          const controlFunction = async (e) => {
+            if (e.key == "Enter") {
+              clearInterval(interval);
+              window.removeEventListener("keyup", controlFunction);
+              if (func) {
+                await func();
+                resolve();
+              } else reject("no function");
             }
-            else reject("no function");
-          }
-        };
-        window.addEventListener("keyup", controlFunction);
+          };
+          window.addEventListener("keyup", controlFunction);
         });
       }
       return {
@@ -469,58 +493,140 @@ class Game {
         },
       };
     };
-    HTMLElement.prototype.falseInput = function (bool = false, keyArr, func, id) {
-      if (!bool) {
+    HTMLElement.prototype.falseInput = function (
+      bool,
+      keyArr,
+      func,
+      id = "Default"
+    ) {
+      if (bool == false) {
         if (!this[id]) {
-        const listener = (e) => {
-          if (keyArr.includes(e.key)) func(e);
-        }
-        this[id] = listener;
-        this.addEventListener("keydown", this[id]);
-        }
+          const listener = (e) => {
+            if (keyArr.includes(e.key)) func(e);
+          };
+          this[id] = listener;
+          window.addEventListener("keydown", this[id]);
+        } else console.log(`${e.key} is not in ${keyArr}`);
         return id;
       } else {
         if (this[id]) {
-          this.removeEventListener("keydown", this[id]);
+          window.removeEventListener("keydown", this[id]);
           this[id] = undefined;
         }
       }
-    }
+    };
     const opening = document.querySelector("#opening");
     [this.scoreDestination, this.destination].forEach(self.off);
     try {
-    await opening.Type("Javascript Air Hockey", time)
-    const play = document.createElement("div");
-    opening.insertAdjacentHTML("beforeend", "<br><br>");
-    opening.append(play);
-    await play.Type("  Play", time);
-    await play.select(time, true, async () => {
-      opening.textContent = "";
-      play.remove();
-      await opening.Type("Input Player Names:", time);
-    });
-    alert("here");
-    const [p1, p2] = new Array(2).fill(null).map(() => document.createElement("div"));
-    const [ph1, ph2] = new Array(2).fill(null).map(() => document.createElement("div"));
-    opening.append(ph1);
-    opening.append(p1);
-    await ph1.Type("Player 1 Name:", time);
-    const nameMax = 10;
-    const p1ID = p1.falseInput(false, ['a', 'b', 'c', 'd', 'e', 'f', 'g','h', 'i', 'j', 'k', 'l', 'm', 'n','o', 'p', 'q', 'r', 's', 't', 'u','v', 'w', 'x', 'y', 'z'], (e) => {
-      alert("falseinput");
-      e.preventDefault();
-      if (p1.textContent.length - 1 <= nameMax) p1.insertAdjacentText("beforeend", e.key);
-    }, Symbol("type"));
-    const p1ID2 = p1.falseInput(false, ["Backspace"], (e) => {
-      alert("backspace");
-      e.preventDefault();
-      p1.textContent = p1.textContent.substring(0,p1.textContent.length - 1);
-    }, Symbol("del"));
-    await p1.select(time, true, () => {
-      p1.falseInput(true, null, null, p1ID);
-      p1.falseInput(true, null, null, p1ID2);
-      alert("finished inputting player1 name");
-    }
+      window.addEventListener("keydown", (e) => {
+        if (typeFlag == true && enterFlag == false) {
+          if (e.key == "Enter") {
+            time /= speedUpInt;
+            enterFlag = true;
+          }
+        }
+      });
+      window.addEventListener("keyup", (e) => {
+        if (enterFlag == true) {
+          enterFlag = false;
+          time *= speedUpInt;
+        }
+      });
+      function br(e) {
+        e.insertAdjacentHTML("beforeend", "<br><br>");
+      }
+      await opening.Type("Javascript Air Hockey", 1);
+      console.log("here");
+      const play = document.createElement("div");
+      br(opening);
+      opening.append(play);
+      await play.Type("  Play", 1);
+      await play.select(selectTime, true, async () => {
+        opening.textContent = "";
+        play.remove();
+        await opening.Type("Input Player Names:", 1);
+      });
+      const [p1, p2, ph1, ph2] = new Array(4)
+        .fill(null)
+        .map(() => document.createElement("div"));
+      const [p1S, p2S, p1T, p2T] = new Array(4)
+        .fill(null)
+        .map(() => document.createElement("span"));
+      br(opening);
+      br(opening);
+      opening.append(ph1);
+      br(opening);
+      opening.append(p1);
+      p1.append(p1S);
+      p1.append(p1T);
+      await ph1.Type("Player 1 Name:", 1);
+      p1S.textContent = "> ";
+      const nameMax = 10;
+      function backSpace(e) {
+        if (e.textContent.substring(0, e.textContent.length - 1).length >= 0)
+          e.textContent = e.textContent.substring(0, e.textContent.length - 1);
+      }
+      function insertLetter(e, key) {
+        if (e.textContent.length - 1 <= nameMax - 3)
+          e.insertAdjacentText("beforeend", key);
+      }
+      const alphabet = new Array(26)
+        .fill(null)
+        .map((_, i) => String.fromCharCode(97 + i));
+      const p1ID = p1T.falseInput(
+        false,
+        alphabet,
+        (e) => {
+          e.preventDefault();
+          insertLetter(p1T, e.key);
+        },
+        Symbol("type")
+      );
+      const p1ID2 = p1T.falseInput(
+        false,
+        ["Backspace"],
+        (e) => {
+          e.preventDefault();
+          backSpace(p1T);
+        },
+        Symbol("del")
+      );
+      await p1S.select(selectTime, true, async () => {
+        p1T.falseInput(true, null, null, p1ID);
+        p1T.falseInput(true, null, null, p1ID2);
+        p1S.textContent = "  ";
+        br(opening);
+        opening.append(ph2);
+        br(opening);
+        opening.append(p2);
+        p2.append(p2S);
+        p2.append(p2T);
+        await ph2.Type("Player 2 Name:", 1);
+        p2S.textContent = "> ";
+      });
+      const p2ID = p1T.falseInput(
+        false,
+        alphabet,
+        (e) => {
+          e.preventDefault();
+          insertLetter(p2T, e.key);
+        },
+        Symbol("type")
+      );
+      const p2ID2 = p2T.falseInput(
+        false,
+        ["Backspace"],
+        (e) => {
+          e.preventDefault();
+          backSpace(p2T);
+        },
+        Symbol("del")
+      );
+      await p2S.select(selectTime, true, () => {
+        p2T.falseInput(true, null, null, p2ID);
+        p2T.falseInput(true, null, null, p2ID2);
+        p2S.textContent = "  ";
+      });
     } catch (error) {
       throw new Error(error);
     }
