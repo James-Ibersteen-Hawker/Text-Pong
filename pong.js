@@ -712,7 +712,7 @@ class Game {
   }
 }
 let game = new Game(
-  1,
+  5,
   document.querySelector("#pong"),
   80,
   5,
