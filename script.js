@@ -32,6 +32,10 @@ class Game {
         lScore: 0,
         rScore: 0,
       }),
+      this.players = {
+        r: undefined,
+        l: undefined
+      },
       (this.scoreDestination = scoreDestination);
     this.Open();
   }
@@ -49,7 +53,6 @@ class Game {
       return new Proxy(arr, {
         set(t, p, r) {
           let reflect = Reflect.set(t, p, r);
-          // self.grid.render();
           setRender = true;
           return reflect;
         },
@@ -79,7 +82,7 @@ class Game {
           self.lPaddle.y = h + 1;
           self.rPaddle.x = self.grid[0].length - w - 1;
           self.rPaddle.y = h + 1;
-          self.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   |   Player 2: ${self.scores.rScore}`;
+          self.scoreDestination.textContent = `${self.players.l}: ${self.scores.lScore}   |   ${self.players.r}: ${self.scores.rScore}`;
         }, 750);
         if (self.scores[p] == self.maxScore) {
           alert("game over");
@@ -473,18 +476,26 @@ class Game {
       );
       if (bool == true) {
         return new Promise(async (resolve, reject) => {
+          let flag = false;
+          const flagFunc = () => {
+            flag = false;
+          }
           const controlFunction = async (e) => {
             if (enterFlag == true) return;
+            if (flag == true) return;
             if (e.key == "Enter") {
+              flag = true;
               clearInterval(interval);
-              window.removeEventListener("keyup", controlFunction);
+              window.removeEventListener("keydown", controlFunction);
+              window.removeEventListener("keyup", flagFunc);
               if (func) {
                 await func();
                 resolve();
               } else reject("no function");
             }
           };
-          window.addEventListener("keyup", controlFunction);
+          window.addEventListener("keydown", controlFunction);
+          window.addEventListener("keyup", flagFunc);
         });
       }
       return {
@@ -579,7 +590,7 @@ class Game {
         alphabet,
         (e) => {
           e.preventDefault();
-          insertLetter(p1T, e.key);
+          insertLetter(p1T, e.key.toLowerCase());
         },
         Symbol("type")
       );
@@ -605,12 +616,12 @@ class Game {
         await ph2.Type("Player 2 Name:", 1);
         p2S.textContent = "> ";
       });
-      const p2ID = p1T.falseInput(
+      const p2ID = p2T.falseInput(
         false,
         alphabet,
         (e) => {
           e.preventDefault();
-          insertLetter(p2T, e.key);
+          insertLetter(p2T, e.key.toLowerCase());
         },
         Symbol("type")
       );
@@ -627,6 +638,16 @@ class Game {
         p2T.falseInput(true, null, null, p2ID);
         p2T.falseInput(true, null, null, p2ID2);
         p2S.textContent = "  ";
+      });
+      self.players.l = P1T.textContent;
+      self.players.r = P2T.textContent;
+      br(opening);
+      const play2 = document.createElement("div");
+      opening.append(play2);
+      await play2.Type("  Play", 1);
+      await play2.select(selectTime, true, async () => {
+        opening.remove();
+        self.Map()
       });
     } catch (error) {
       throw new Error(error);
