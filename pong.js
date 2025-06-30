@@ -5,9 +5,19 @@ class Game {
   speed;
   speedUp;
   typeSpeed;
+  speedKey;
   w;
   h;
-  constructor(maxScore, gameDestination, speed, speedUp, typeSpeed, w, h) {
+  constructor(
+    maxScore,
+    gameDestination,
+    speed,
+    speedUp,
+    typeSpeed,
+    speedKey,
+    w,
+    h
+  ) {
     (this.res = 2),
       (this.maxScore = maxScore),
       (this.scores = {
@@ -18,6 +28,7 @@ class Game {
       (this.speedUp = speedUp),
       (this.typeSpeed = typeSpeed),
       (this.gameDestination = gameDestination),
+      (this.speedKey = speedKey),
       (this.w = w),
       (this.h = h),
       (this.glyphs = {
@@ -76,27 +87,33 @@ class Game {
       this.ref = Array.from({ length: this.grid.length }, (_, i) => {
         return [...this.grid[i].self].map(() => "b");
       });
-      if (self.players.l == " ") self.players.l = "Player 1";
-      if (self.players.r == " ") self.players.r = "Player 2";
-      this.scoreDestination.textContent = `${self.players.l} ${self.scores.lScore}   |   ${self.players.r} ${self.scores.rScore}`;
+      if (self.players.l == "") self.players.l = "Player 1";
+      if (self.players.r == "") self.players.r = "Player 2";
+      this.scoreDestination.textContent = `${self.players.l}: ${self.scores.lScore}   |   ${self.players.r}: ${self.scores.rScore}`;
       this.scores = new Proxy(this.scores, {
         set(t, p, v) {
           let reflect = Reflect.set(t, p, v);
           self.scoreDestination.textContent = "SCORE";
           puck.v = [0, 0];
           puck.bounceFlag = true;
-          setTimeout(() => {
-            puck.x = w * self.res + 1;
-            puck.y = h + 1;
-            puck.v = [0, 0];
-            puck.bounceFlag = false;
-            self.lPaddle.x = w;
-            self.lPaddle.y = h + 1;
-            self.rPaddle.x = self.grid[0].length - w - 1;
-            self.rPaddle.y = h + 1;
-            self.scoreDestination.textContent = `${self.players.l}: ${self.scores.lScore}   |   ${self.players.r}: ${self.scores.rScore}`;
-          }, 750);
-          if (self.scores[p] == self.maxScore) resolve();
+          if (self.scores[p] == self.maxScore) {
+            setTimeout(() => {
+              self.scoreDestination.textContent = `${self.players.l}: ${self.scores.lScore}   |   ${self.players.r}: ${self.scores.rScore}`;
+              setTimeout(() => resolve(), 1000);
+            }, 500);
+          } else {
+            setTimeout(() => {
+              puck.x = w * self.res + 1;
+              puck.y = h + 1;
+              puck.v = [0, 0];
+              puck.bounceFlag = false;
+              self.lPaddle.x = w;
+              self.lPaddle.y = h + 1;
+              self.rPaddle.x = self.grid[0].length - w - 1;
+              self.rPaddle.y = h + 1;
+              self.scoreDestination.textContent = `${self.players.l}: ${self.scores.lScore}   |   ${self.players.r}: ${self.scores.rScore}`;
+            }, 750);
+          }
           return reflect;
         },
         get(t, p, v) {
@@ -542,7 +559,7 @@ class Game {
     try {
       window.addEventListener("keydown", (e) => {
         if (typeFlag == true && enterFlag == false) {
-          if (e.key == "Enter") {
+          if (e.key == self.speedKey) {
             time /= speedUpInt;
             enterFlag = true;
           }
@@ -665,7 +682,6 @@ class Game {
         await self.Map();
       });
       opening.textContent = "";
-      br(opening);
       self.openingFlag = false;
       if (self.scores.lScore != self.scores.rScore) {
         const winner =
@@ -679,15 +695,29 @@ class Game {
           )?.[1] || "Error";
         await opening.Type(
           `${winner[0].toUpperCase() + winner.slice(1)} wins!`,
-          time
+          1
         );
       } else {
         await opening.Type("It's a tie!", time);
       }
-      await opening.Type("");
+      const again = document.createElement("div");
+      br(opening);
+      br(opening);
+      opening.append(again);
+      await again.Type("  Play Again?", 1);
+      await again.select(selectTime, true, () => location.reload());
     } catch (error) {
       throw new Error(error);
     }
   }
 }
-let game = new Game(1, document.querySelector("#pong"), 80, 5, 200, 5, 6);
+let game = new Game(
+  1,
+  document.querySelector("#pong"),
+  80,
+  5,
+  200,
+  "Enter",
+  5,
+  6
+);
