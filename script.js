@@ -1,13 +1,24 @@
 "use strict";
 class Game {
-  res;
   maxScore;
   roundCount;
-  destination;
+  gameDestination;
   speed;
-  scoreDestination;
-  constructor(res, maxScore, roundCount, destination, speed, scoreDestination) {
-    (this.res = res),
+  speedUp;
+  typeSpeed;
+  w;
+  h;
+  constructor(
+    maxScore,
+    roundCount,
+    gameDestination,
+    speed,
+    speedUp,
+    typeSpeed,
+    w,
+    h
+  ) {
+    (this.res = 2),
       (this.maxScore = maxScore),
       (this.roundCount = roundCount),
       (this.scores = {
@@ -15,7 +26,11 @@ class Game {
         score2: 0,
       }),
       (this.speed = speed),
-      (this.destination = destination),
+      (this.speedUp = speedUp),
+      (this.typeSpeed = typeSpeed),
+      (this.gameDestination = gameDestination),
+      (this.w = w),
+      (this.h = h),
       (this.glyphs = {
         mid: "ǁ",
         tbEdge: "-",
@@ -32,20 +47,25 @@ class Game {
         lScore: 0,
         rScore: 0,
       }),
-      this.players = {
+      (this.players = {
         r: undefined,
-        l: undefined
-      },
-      (this.scoreDestination = scoreDestination);
-    this.Open();
+        l: undefined,
+      }),
+      this.Open();
   }
   Map() {
-    this.openingFlag = true;
-    [this.scoreDestination, this.destination].forEach(self.on);
     const self = this;
+    this.openingFlag = true;
+    const scoresDestination = document.createElement("div");
+    const innerDestination = document.createElement("div");
+    this.gameDestination.append(scoresDestination);
+    this.gameDestination.insertAdjacentHTML("beforeend", "<br><br>");
+    this.gameDestination.append(innerDestination);
+    this.destination = innerDestination;
+    this.scoreDestination = scoresDestination;
     let setRender = false;
-    let w = 5;
-    let h = 6;
+    let w = this.w;
+    let h = this.h;
     if (h % 2 == 0) h += 1;
     h = Math.max(h, 5);
     this.grid = Array.from({ length: h * this.res + 3 }, () => {
@@ -66,7 +86,9 @@ class Game {
     this.ref = Array.from({ length: this.grid.length }, (_, i) => {
       return [...this.grid[i].self].map(() => "b");
     });
-    this.scoreDestination.textContent = `Player 1: ${self.scores.lScore}   |   Player 2: ${self.scores.rScore}`;
+    if (self.players.l == " ") self.players.l = "Player 1";
+    if (self.players.r == " ") self.players.r = "Player 2";
+    this.scoreDestination.textContent = `${self.players.l} ${self.scores.lScore}   |   ${self.players.r} ${self.scores.rScore}`;
     this.scores = new Proxy(this.scores, {
       set(t, p, v) {
         let reflect = Reflect.set(t, p, v);
@@ -425,9 +447,9 @@ class Game {
   async Open() {
     this.openingFlag = false;
     const self = this;
-    let time = 200;
-    const speedUpInt = 5;
-    const selectTime = 200;
+    let time = self.typeSpeed;
+    const speedUpInt = self.speedUp;
+    const selectTime = self.typeSpeed;
     function Time() {
       return time;
     }
@@ -479,7 +501,7 @@ class Game {
           let flag = false;
           const flagFunc = () => {
             flag = false;
-          }
+          };
           const controlFunction = async (e) => {
             if (enterFlag == true) return;
             if (flag == true) return;
@@ -527,8 +549,7 @@ class Game {
         }
       }
     };
-    const opening = document.querySelector("#opening");
-    [this.scoreDestination, this.destination].forEach(self.off);
+    const opening = self.gameDestination;
     try {
       window.addEventListener("keydown", (e) => {
         if (typeFlag == true && enterFlag == false) {
@@ -548,7 +569,6 @@ class Game {
         e.insertAdjacentHTML("beforeend", "<br><br>");
       }
       await opening.Type("Javascript Air Hockey", 1);
-      console.log("here");
       const play = document.createElement("div");
       br(opening);
       opening.append(play);
@@ -582,9 +602,13 @@ class Game {
         if (e.textContent.length - 1 <= nameMax - 3)
           e.insertAdjacentText("beforeend", key);
       }
-      const alphabet = new Array(26)
+      const lAlphabet = new Array(26)
         .fill(null)
         .map((_, i) => String.fromCharCode(97 + i));
+      const uAlphabet = new Array(26)
+        .fill(null)
+        .map((_, i) => String.fromCharCode(65 + i));
+      const alphabet = [...lAlphabet, ...uAlphabet];
       const p1ID = p1T.falseInput(
         false,
         alphabet,
@@ -639,32 +663,21 @@ class Game {
         p2T.falseInput(true, null, null, p2ID2);
         p2S.textContent = "  ";
       });
-      self.players.l = P1T.textContent;
-      self.players.r = P2T.textContent;
+      self.players.l = p1T.textContent;
+      self.players.r = p2T.textContent;
       br(opening);
       const play2 = document.createElement("div");
       opening.append(play2);
       await play2.Type("  Play", 1);
-      await play2.select(selectTime, true, async () => {
-        opening.remove();
-        self.Map()
+      await play2.select(selectTime, true, () => {
+        opening.textContent = "";
+        br(opening);
+        self.openingFlag = true;
+        self.Map();
       });
     } catch (error) {
       throw new Error(error);
     }
   }
-  off(e) {
-    e.setAttribute("style", "display: none;");
-  }
-  on(e) {
-    e.setAttribute("style", "display: block;");
-  }
 }
-let game = new Game(
-  2,
-  4,
-  5,
-  document.querySelector("#pong"),
-  80,
-  document.querySelector("#scores")
-);
+let game = new Game(4, 5, document.querySelector("#pong"), 80, 5, 200, 5, 6);
